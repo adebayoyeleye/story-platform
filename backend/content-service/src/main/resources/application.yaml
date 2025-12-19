@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: content-service
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: storydb
+      username: admin
+      password: password123
+      authentication-database: admin
+
+server:
+  port: 8080
