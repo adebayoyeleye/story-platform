@@ -1,9 +1,18 @@
 spring:
   application:
-    name: content-service
+    name: ${SPRING_APPLICATION_NAME:content-service}
+
   data:
+    #data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI}
+        #uri: REMOVED_URI/storydb
+        #uri: mongodb://admin:password123@mongodb:27017/storydb?authSource=admin
+      host: ${SPRING_DATA_MONGODB_HOST:localhost}
+      port: ${SPRING_DATA_MONGODB_PORT:27017}
+      database: ${SPRING_DATA_MONGODB_DATABASE:storydb}
+      username: ${SPRING_DATA_MONGODB_USERNAME:admin}
+      password: ${SPRING_DATA_MONGODB_PASSWORD:password123}
+      authentication-database: ${SPRING_DATA_MONGODB_AUTHENTICATION_DATABASE:admin}
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}

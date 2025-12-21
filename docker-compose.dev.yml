@@ -7,6 +7,7 @@ services:
       - .env  # Loads secrets like DB_PASSWORD
     environment:
       SPRING_PROFILES_ACTIVE: dev # Forces the profile for this specific file
+      # SPRING_DATA_MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/storydb?authSource=admin
     depends_on:
       - mongodb
 
