@@ -11,9 +11,12 @@ services:
       - mongodb
 
   frontend:
-    build: ./frontend
+    image: node:24-alpine # Use a real Node image instead of building the Nginx one
+    working_dir: /app
     ports:
       - "5173:5173"
+    volumes:
+      - ./frontend:/app # Bind mount your code for hot-reloading
     command: npm run dev
 
   mongodb:
