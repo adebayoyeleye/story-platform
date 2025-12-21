@@ -5,9 +5,13 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: true,     // MUST BE TRUE: Allows the container to accept external traffic from your computer
+    port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080', // Point to your Java Backend
+        // Use the service name from your docker-compose file (e.g., content-service)
+        // Inside Docker, 'localhost' would point to the frontend container itself.
+        target: 'http://content-service:8080',  //Point to Java backend service
         changeOrigin: true,
         secure: false,
       }

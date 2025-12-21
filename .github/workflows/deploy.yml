@@ -1,0 +1,71 @@
+name: Build and Deploy to Production
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # ---------- Build Backend ----------
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+
+    - name: Build Backend
+      working-directory: backend/content-service
+      run: ./mvnw clean package -DskipTests
+
+    # ---------- Build Frontend ----------
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
+
+    - name: Build Frontend
+      working-directory: frontend
+      run: |
+        npm ci
+        npm run build
+
+    # ---------- Docker Login ----------
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    # ---------- Build & Push Images ----------
+    - name: Build & Push content-service Image
+      run: |
+        docker build -t adebayoyeleye/story-content-service:latest backend/content-service
+        docker push adebayoyeleye/story-content-service:latest
+
+    - name: Build & Push Frontend Image
+      run: |
+        docker build -t adebayoyeleye/story-frontend:latest frontend
+        docker push adebayoyeleye/story-frontend:latest
+
+    # ---------- Deploy to Oracle VM ----------
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.OCI_HOST }}
+        username: ubuntu
+        key: ${{ secrets.OCI_HOST_SSH_KEY }}
+        script: |
+          if [ ! -d "/home/ubuntu/app" ]; then
+            git clone https://github.com/adebayoyeleye/story-platform.git /home/ubuntu/app
+          fi
+
+          cd /home/ubuntu/app
+          git pull origin main
+          docker compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml up -d

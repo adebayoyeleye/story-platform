@@ -1,0 +1,21 @@
+services:
+  content-service:
+    image: adebayoyeleye/story-content-service:latest
+    env_file:
+      - .env
+    restart: always
+
+  frontend:
+    image: adebayoyeleye/story-frontend:latest
+    restart: always
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+      - frontend
+    restart: always

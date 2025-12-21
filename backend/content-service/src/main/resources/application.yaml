@@ -1,13 +1,9 @@
 spring:
   application:
     name: content-service
-  mongodb:
-    host: localhost
-    port: 27017
-    database: storydb
-    username: admin
-    password: password123
-    authentication-database: admin
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI}
 
 server:
   port: 8080

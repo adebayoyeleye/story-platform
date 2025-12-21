@@ -1,0 +1,30 @@
+services:
+  content-service:
+    build: ./backend/content-service
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env  # Loads secrets like DB_PASSWORD
+    environment:
+      SPRING_PROFILES_ACTIVE: dev # Forces the profile for this specific file
+    depends_on:
+      - mongodb
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    command: npm run dev
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    env_file:
+      - .env
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
