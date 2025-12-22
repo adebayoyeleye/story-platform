@@ -12,22 +12,25 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    # ---------- Build Backend ----------
+    # ---------- Build Backend with Caching ----------
     - name: Set up Java
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         java-version: '25'
         distribution: 'temurin'
+        cache: 'maven' # Automatically caches ~/.m2 dependencies
 
     - name: Build Backend
       working-directory: backend/content-service
       run: ./mvnw clean package -DskipTests
 
-    # ---------- Build Frontend ----------
+    # ---------- Build Frontend with Caching ----------
     - name: Set up Node
       uses: actions/setup-node@v4
       with:
         node-version: 24
+        cache: 'npm' # Automatically caches node_modules
+        cache-dependency-path: frontend/package-lock.json
 
     - name: Build Frontend
       working-directory: frontend
@@ -35,32 +38,45 @@ jobs:
         npm ci
         npm run build
 
-    # ---------- Docker Login ----------
+    # ---------- Docker Login & Setup ----------
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
     - name: Log in to Docker Hub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    # ---------- Build & Push Images ----------
-    - name: Build & Push content-service Image
-      run: |
-        docker build -t adebayoyeleye/story-content-service:latest backend/content-service
-        docker push adebayoyeleye/story-content-service:latest
+    # ---------- Modern Build & Push ----------
+    - name: Build & Push content-service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend/content-service
+        push: true
+        tags: adebayoyeleye/story-content-service:latest
 
-    - name: Build & Push Frontend Image
-      run: |
-        docker build -t adebayoyeleye/story-frontend:latest frontend
-        docker push adebayoyeleye/story-frontend:latest
+    - name: Build & Push Frontend
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        push: true
+        tags: adebayoyeleye/story-frontend:latest
 
-    # ---------- Deploy to Oracle VM ----------
+    # ---------- Enhanced Deploy Script ----------
     - name: Deploy to Oracle Cloud VM
-      uses: appleboy/ssh-action@v1.0.0
+      uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.OCI_HOST }}
         username: ubuntu
         key: ${{ secrets.OCI_HOST_SSH_KEY }}
         script: |
           cd /home/ubuntu/app
+          # Ensure latest images are present
           docker compose -f docker-compose.prod.yml pull
-          docker compose -f docker-compose.prod.yml up -d
+          # Force recreation to catch config file changes
+          docker compose -f docker-compose.prod.yml up -d --force-recreate
+          # Explicitly reload nginx to apply mapped nginx.conf updates
+          docker compose exec -T nginx nginx -s reload
+          # Cleanup old images to prevent disk fill-up
+          docker image prune -f
