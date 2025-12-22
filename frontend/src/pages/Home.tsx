@@ -6,7 +6,7 @@ export default function Home() {
   const [stories, setStories] = useState<Story[]>([]);
 
   useEffect(() => {
-    fetch('/api/stories')
+    fetch('/api/v1/stories')
       .then(res => res.json())
       .then(data => setStories(data));
   }, []);

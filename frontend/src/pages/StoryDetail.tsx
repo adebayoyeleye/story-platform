@@ -7,7 +7,7 @@ export default function StoryDetail() {
   const [story, setStory] = useState<Story | null>(null);
 
   useEffect(() => {
-    fetch('/api/stories') // Optimisation needed later: GET /api/stories/{id}
+    fetch('/api/v1/stories') // Optimisation needed later: GET /api/stories/{id}
       .then(res => res.json())
       .then((data: Story[]) => {
         const found = data.find(s => s.id === id);

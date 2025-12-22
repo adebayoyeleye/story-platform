@@ -8,7 +8,7 @@ export default function ChapterRead() {
   const chapterIndex = Number(index);
 
   useEffect(() => {
-    fetch('/api/stories')
+    fetch('/api/v1/stories')
       .then(res => res.json())
       .then((data: Story[]) => {
         const found = data.find(s => s.id === id);
