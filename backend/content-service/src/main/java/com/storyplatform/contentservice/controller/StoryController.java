@@ -19,8 +19,9 @@ public class StoryController {
 
     // 1. Create a Story
     @PostMapping
-    public Story createStory(@RequestBody Story story) {
-        return repository.save(story);
+    public ResponseEntity<Story> createStory(@RequestBody Story story) {
+        Story savedStory = repository.save(story);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedStory);
     }
 
     // 2. Read all Stories
