@@ -7,6 +7,9 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  # This tells Spring Boot: "Everything starts with /api"
+  servlet:
+    context-path: /api  
 
 # Spring Boot Actuator Configuration
 management:
@@ -17,3 +20,10 @@ management:
   endpoint:
     health:
       show-details: always
+
+# Add custom info here
+info:
+  app:
+    name: Story Platform
+    description: Backend for content service
+    version: 1.0.0      
