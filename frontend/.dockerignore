@@ -1,0 +1,21 @@
+# Ignore local dependencies (crucial for Docker)
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Ignore build outputs
+dist
+build
+.next
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore Git files
+.git
+.gitignore
+
+# Ignore Docker-related files themselves
+Dockerfile*
+.dockerignore

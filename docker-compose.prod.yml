@@ -3,6 +3,8 @@ services:
     image: adebayoyeleye/story-content-service:latest
     env_file:
       - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod # Forces the profile for this specific file
     restart: always
 
   frontend:

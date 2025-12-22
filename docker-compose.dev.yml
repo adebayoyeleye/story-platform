@@ -7,18 +7,21 @@ services:
       - .env  # Loads secrets like DB_PASSWORD
     environment:
       SPRING_PROFILES_ACTIVE: dev # Forces the profile for this specific file
-      # SPRING_DATA_MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/storydb?authSource=admin
     depends_on:
       - mongodb
 
   frontend:
-    image: node:24-alpine # Use a real Node image instead of building the Nginx one
-    working_dir: /app
+    # image: node:24-alpine # Use a real Node image instead of building the Nginx one
+    # working_dir: /app
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
     ports:
       - "5173:5173"
     volumes:
       - ./frontend:/app # Bind mount your code for hot-reloading
-    command: npm run dev
+      - /app/node_modules # Anonymous volume prevents host node_modules from overwriting container ones
+    command: npm run dev -- --host 0.0.0.0 # Crucial for Vite/Docker accessibility
 
   mongodb:
     image: mongo:latest
