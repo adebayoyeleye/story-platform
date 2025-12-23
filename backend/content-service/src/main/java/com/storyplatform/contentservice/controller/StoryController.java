@@ -1,7 +1,8 @@
 package com.storyplatform.contentservice.controller;
 
-import com.storyplatform.contentservice.model.Story;
-import com.storyplatform.contentservice.repository.StoryRepository;
+import com.storyplatform.contentservice.dto.StoryRequestDto;
+import com.storyplatform.contentservice.dto.StoryResponseDto;
+import com.storyplatform.contentservice.service.StoryService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,23 +13,23 @@ import java.util.List;
 @RequestMapping("/v1/stories")
 public class StoryController {
 
-    private final StoryRepository repository;
+    private final StoryService service;
 
-    // Constructor Injection (Best Practice)
-    public StoryController(StoryRepository repository) {
-        this.repository = repository;
+    public StoryController(StoryService service) {
+        this.service = service;
     }
 
-    // 1. Create a Story
     @PostMapping
-    public ResponseEntity<Story> createStory(@RequestBody Story story) {
-        Story savedStory = repository.save(story);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedStory);
+    public ResponseEntity<StoryResponseDto> createStory(
+            @RequestBody StoryRequestDto request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(service.createStory(request));
     }
 
-    // 2. Read all Stories
     @GetMapping
-    public List<Story> getAllStories() {
-        return repository.findAll();
+    public List<StoryResponseDto> getAllStories() {
+        return service.getAllStories();
     }
 }
