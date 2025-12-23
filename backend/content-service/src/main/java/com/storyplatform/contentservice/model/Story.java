@@ -6,7 +6,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.List;
 
 @Document(collection = "stories")
-@CompoundIndex(name = "story_author_created_idx", def = "{'authorId': 1, 'createdAt': -1}")
 public record Story(
     @Id String id,
     String title,

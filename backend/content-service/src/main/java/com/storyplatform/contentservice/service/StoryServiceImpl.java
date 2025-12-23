@@ -4,6 +4,9 @@ import com.storyplatform.contentservice.dto.*;
 import com.storyplatform.contentservice.model.Story;
 import com.storyplatform.contentservice.model.Chapter;
 import com.storyplatform.contentservice.repository.StoryRepository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,37 +28,29 @@ public class StoryServiceImpl implements StoryService {
                 request.title(),
                 request.author(),
                 request.synopsis(),
-                request.chapters().stream()
-                        .map(c -> new Chapter(c.title(), c.content()))
-                        .toList());
+                request.chapters() == null
+                        ? List.of()
+                        : request.chapters().stream()
+                            .map(c -> new Chapter(c.title(), c.content()))
+                            .toList()
+        );
 
-        Story saved = repository.save(story);
-
-        return mapToResponse(saved);
+        return mapToResponse(repository.save(story));
     }
 
     @Override
-    public PagedResponseDto<StoryResponseDto> getStories(PageRequestDto pageRequest) {
+    public Page<StoryResponseDto> getStories(Pageable pageable) {
 
-        int page = pageRequest.getPage();
-        int size = pageRequest.getSize();
+        enforcePageSize(pageable);
 
-        List<StoryResponseDto> all = repository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        return repository.findAll(pageable)
+                .map(this::mapToResponse);
+    }
 
-        int fromIndex = Math.min(page * size, all.size());
-        int toIndex = Math.min(fromIndex + size, all.size());
-
-        List<StoryResponseDto> pageItems = all.subList(fromIndex, toIndex);
-
-        return new PagedResponseDto<>(
-                pageItems,
-                page,
-                size,
-                all.size());
-
+    private void enforcePageSize(Pageable pageable) {
+        if (pageable.getPageSize() > 50) {
+            throw new IllegalArgumentException("Page size cannot exceed 50");
+        }
     }
 
     private StoryResponseDto mapToResponse(Story story) {
@@ -67,7 +62,8 @@ public class StoryServiceImpl implements StoryService {
                 story.chapters() == null
                         ? List.of()
                         : story.chapters().stream()
-                                .map(c -> new ChapterDto(c.title(), c.content()))
-                                .toList());
+                            .map(c -> new ChapterDto(c.title(), c.content()))
+                            .toList()
+        );
     }
 }
