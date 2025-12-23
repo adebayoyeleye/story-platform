@@ -18,7 +18,7 @@ public class StoryServiceImpl implements StoryService {
     }
 
     @Override
-    public StoryResponseDto createStory(StoryRequestDto request) {
+    public StoryResponseDto create(StoryRequestDto request) {
 
         Story story = new Story(
             null,
@@ -36,12 +36,29 @@ public class StoryServiceImpl implements StoryService {
     }
 
     @Override
-    public List<StoryResponseDto> getAllStories() {
-        return repository.findAll()
+    public PagedResponseDto<StoryResponseDto> getStories(PageRequestDto pageRequest) {
+
+        // Phase 1: stubbed data (repository comes next phase)
+        // List<StoryResponseDto> stories = List.of();
+        // long totalItems = 0;
+
+        // This is not paged...to be removed later when pagination is implemented in repository
+        List<StoryResponseDto> stories = repository.findAll()
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
+
+        // Also to be replaced later
+        long totalItems = stories.size();
+
+        return new PagedResponseDto<>(
+            stories,
+            pageRequest.getPage(),
+            pageRequest.getSize(),
+            totalItems
+        );
     }
+
 
     private StoryResponseDto mapToResponse(Story story) {
         return new StoryResponseDto(
@@ -49,8 +66,10 @@ public class StoryServiceImpl implements StoryService {
             story.title(),
             story.author(),
             story.synopsis(),
-            story.chapters().stream()
-                .map(c -> new ChapterDto(c.title(), c.content()))
+            story.chapters() == null
+                ? List.of()
+                : story.chapters().stream()
+                    .map(c -> new ChapterDto(c.title(), c.content()))
                 .toList()
         );
     }
