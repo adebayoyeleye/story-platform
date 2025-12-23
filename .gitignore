@@ -1,2 +1,16 @@
-.env*
+# Node
+node_modules/
+
+# Java
+target/
+*.log
+
+# Env files
+.env
+.env.*
 !.env.example
+
+# IDE
+.idea/
+.vscode/
+.DS_Store
