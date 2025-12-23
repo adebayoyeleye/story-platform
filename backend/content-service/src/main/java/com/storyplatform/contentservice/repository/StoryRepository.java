@@ -2,8 +2,11 @@ package com.storyplatform.contentservice.repository;
 
 import com.storyplatform.contentservice.model.Story;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-@Repository
-public interface StoryRepository extends MongoRepository<Story, String> {
+public interface StoryRepository
+        extends MongoRepository<Story, String> {
+
+    Page<Story> findAll(Pageable pageable);
 }
