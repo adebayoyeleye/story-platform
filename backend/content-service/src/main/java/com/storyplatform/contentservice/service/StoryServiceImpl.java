@@ -21,14 +21,13 @@ public class StoryServiceImpl implements StoryService {
     public StoryResponseDto create(StoryRequestDto request) {
 
         Story story = new Story(
-            null,
-            request.title(),
-            request.author(),
-            request.synopsis(),
-            request.chapters().stream()
-                .map(c -> new Chapter(c.title(), c.content()))
-                .toList()
-        );
+                null,
+                request.title(),
+                request.author(),
+                request.synopsis(),
+                request.chapters().stream()
+                        .map(c -> new Chapter(c.title(), c.content()))
+                        .toList());
 
         Story saved = repository.save(story);
 
@@ -38,39 +37,37 @@ public class StoryServiceImpl implements StoryService {
     @Override
     public PagedResponseDto<StoryResponseDto> getStories(PageRequestDto pageRequest) {
 
-        // Phase 1: stubbed data (repository comes next phase)
-        // List<StoryResponseDto> stories = List.of();
-        // long totalItems = 0;
+        int page = pageRequest.getPage();
+        int size = pageRequest.getSize();
 
-        // This is not paged...to be removed later when pagination is implemented in repository
-        List<StoryResponseDto> stories = repository.findAll()
+        List<StoryResponseDto> all = repository.findAll()
                 .stream()
                 .map(this::mapToResponse)
                 .toList();
 
-        // Also to be replaced later
-        long totalItems = stories.size();
+        int fromIndex = Math.min(page * size, all.size());
+        int toIndex = Math.min(fromIndex + size, all.size());
+
+        List<StoryResponseDto> pageItems = all.subList(fromIndex, toIndex);
 
         return new PagedResponseDto<>(
-            stories,
-            pageRequest.getPage(),
-            pageRequest.getSize(),
-            totalItems
-        );
-    }
+                pageItems,
+                page,
+                size,
+                all.size());
 
+    }
 
     private StoryResponseDto mapToResponse(Story story) {
         return new StoryResponseDto(
-            story.id(),
-            story.title(),
-            story.author(),
-            story.synopsis(),
-            story.chapters() == null
-                ? List.of()
-                : story.chapters().stream()
-                    .map(c -> new ChapterDto(c.title(), c.content()))
-                .toList()
-        );
+                story.id(),
+                story.title(),
+                story.author(),
+                story.synopsis(),
+                story.chapters() == null
+                        ? List.of()
+                        : story.chapters().stream()
+                                .map(c -> new ChapterDto(c.title(), c.content()))
+                                .toList());
     }
 }
