@@ -2,12 +2,13 @@ package com.storyplatform.contentservice.service;
 
 import com.storyplatform.contentservice.dto.StoryRequestDto;
 import com.storyplatform.contentservice.dto.StoryResponseDto;
-
-import java.util.List;
+import com.storyplatform.contentservice.dto.PageRequestDto;
+import com.storyplatform.contentservice.dto.PagedResponseDto;
 
 public interface StoryService {
 
-    StoryResponseDto createStory(StoryRequestDto request);
+    StoryResponseDto create(StoryRequestDto request);
 
-    List<StoryResponseDto> getAllStories();
+    PagedResponseDto<StoryResponseDto> getStories(PageRequestDto pageRequest);
 }
+

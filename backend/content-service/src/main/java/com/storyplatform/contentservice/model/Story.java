@@ -12,4 +12,10 @@ public record Story(
     String author,
     String synopsis,
     List<Chapter> chapters
-) {}
+) {
+    public Story {
+        if (chapters == null) {
+            chapters = List.of();
+        }
+    }
+}
