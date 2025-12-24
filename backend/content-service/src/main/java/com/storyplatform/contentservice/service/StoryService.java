@@ -1,13 +1,15 @@
 package com.storyplatform.contentservice.service;
 
-import com.storyplatform.contentservice.dto.StoryRequestDto;
-import com.storyplatform.contentservice.dto.StoryResponseDto;
+import com.storyplatform.contentservice.domain.Story;
+import com.storyplatform.contentservice.domain.StoryStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface StoryService {
 
-    StoryResponseDto create(StoryRequestDto request);
+    Story create(Story story);
 
-    Page<StoryResponseDto> getStories(Pageable pageable);
+    Page<Story> getStories(Pageable pageable);
+
+    Story updateStatus(String storyId, StoryStatus status);
 }

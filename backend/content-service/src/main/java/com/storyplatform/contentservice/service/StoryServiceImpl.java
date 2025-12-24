@@ -1,69 +1,46 @@
 package com.storyplatform.contentservice.service;
 
-import com.storyplatform.contentservice.dto.*;
-import com.storyplatform.contentservice.model.Story;
-import com.storyplatform.contentservice.model.Chapter;
+import com.storyplatform.contentservice.domain.Story;
+import com.storyplatform.contentservice.domain.StoryStatus;
+import com.storyplatform.contentservice.exception.ResourceNotFoundException;
 import com.storyplatform.contentservice.repository.StoryRepository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 public class StoryServiceImpl implements StoryService {
 
-    private final StoryRepository repository;
+    private final StoryRepository storyRepository;
 
-    public StoryServiceImpl(StoryRepository repository) {
-        this.repository = repository;
+    public StoryServiceImpl(StoryRepository storyRepository) {
+        this.storyRepository = storyRepository;
     }
 
     @Override
-    public StoryResponseDto create(StoryRequestDto request) {
-
-        Story story = new Story(
-                null,
-                request.title(),
-                request.author(),
-                request.synopsis(),
-                request.chapters() == null
-                        ? List.of()
-                        : request.chapters().stream()
-                            .map(c -> new Chapter(c.title(), c.content()))
-                            .toList()
-        );
-
-        return mapToResponse(repository.save(story));
+    public Story create(Story story) {
+        return storyRepository.save(story);
     }
 
     @Override
-    public Page<StoryResponseDto> getStories(Pageable pageable) {
-
+    public Page<Story> getStories(Pageable pageable) {
         enforcePageSize(pageable);
+        return storyRepository.findAll(pageable);
+    }
 
-        return repository.findAll(pageable)
-                .map(this::mapToResponse);
+    @Override
+    public Story updateStatus(String storyId, StoryStatus status) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
+
+        story.setStatus(status);
+        return storyRepository.save(story);
     }
 
     private void enforcePageSize(Pageable pageable) {
         if (pageable.getPageSize() > 50) {
             throw new IllegalArgumentException("Page size cannot exceed 50");
         }
-    }
-
-    private StoryResponseDto mapToResponse(Story story) {
-        return new StoryResponseDto(
-                story.id(),
-                story.title(),
-                story.author(),
-                story.synopsis(),
-                story.chapters() == null
-                        ? List.of()
-                        : story.chapters().stream()
-                            .map(c -> new ChapterDto(c.title(), c.content()))
-                            .toList()
-        );
     }
 }

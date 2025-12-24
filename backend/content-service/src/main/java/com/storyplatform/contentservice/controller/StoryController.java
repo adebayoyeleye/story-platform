@@ -1,5 +1,7 @@
 package com.storyplatform.contentservice.controller;
 
+import com.storyplatform.contentservice.domain.Story;
+import com.storyplatform.contentservice.domain.StoryStatus;
 import com.storyplatform.contentservice.dto.StoryRequestDto;
 import com.storyplatform.contentservice.dto.StoryResponseDto;
 import com.storyplatform.contentservice.service.StoryService;
@@ -20,31 +22,60 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class StoryController {
 
-    private final StoryService service;
+    private final StoryService storyService;
 
-    public StoryController(StoryService service) {
-        this.service = service;
+    public StoryController(StoryService storyService) {
+        this.storyService = storyService;
     }
 
     @PostMapping
     public ResponseEntity<StoryResponseDto> create(
-            @Valid @RequestBody StoryRequestDto request) {
+            @Valid @RequestBody StoryRequestDto request
+    ) {
+        Story story = new Story(
+                request.title(),
+                request.authorId(),
+                request.synopsis()
+        );
+
+        Story saved = storyService.create(story);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(service.create(request));
+                .body(toResponse(saved));
     }
 
     @GetMapping
     public ResponseEntity<Page<StoryResponseDto>> getStories(
             @PageableDefault(
-                size = 10,
-                sort = "id",
-                direction = Sort.Direction.DESC
-            ) Pageable pageable) {
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            ) Pageable pageable
+    ) {
+        Page<StoryResponseDto> result =
+                storyService.getStories(pageable)
+                        .map(this::toResponse);
 
-        return ResponseEntity.ok(
-                service.getStories(pageable)
+        return ResponseEntity.ok(result);
+    }
+
+    @PatchMapping("/{storyId}/status")
+    public ResponseEntity<StoryResponseDto> updateStatus(
+            @PathVariable String storyId,
+            @RequestParam StoryStatus status
+    ) {
+        Story updated = storyService.updateStatus(storyId, status);
+        return ResponseEntity.ok(toResponse(updated));
+    }
+
+    private StoryResponseDto toResponse(Story story) {
+        return new StoryResponseDto(
+                story.getId(),
+                story.getTitle(),
+                story.getAuthorId(),
+                story.getSynopsis(),
+                story.getStatus()
         );
     }
 }
