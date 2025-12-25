@@ -39,6 +39,10 @@ public class ChapterServiceImpl implements ChapterService {
     @Override
     public Chapter insertChapter(String storyId, Chapter chapter, int position) {
 
+        if (position < 1) {
+            throw new IllegalArgumentException("Chapter position must be >= 1");
+        }
+
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
 
