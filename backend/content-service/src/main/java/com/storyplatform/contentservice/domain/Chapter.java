@@ -1,10 +1,18 @@
 package com.storyplatform.contentservice.domain;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 
+@CompoundIndexes({
+    @CompoundIndex(
+        name = "story_chapter_order_idx",
+        def = "{'storyId': 1, 'chapterNumber': 1}"
+    )
+})
 @Document(collection = "chapters")
 public class Chapter {
 
