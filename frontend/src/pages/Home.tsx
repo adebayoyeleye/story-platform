@@ -4,18 +4,57 @@ import type { StorySummary } from '../types';
 
 export default function Home() {
   const [stories, setStories] = useState<StorySummary[]>([]);
-  
-  useEffect(() => {
-    fetch('/api/v1/stories?page=0&size=10')
-      .then(res => res.json())
-      .then(data => setStories(data.content ?? []));
-  }, []);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
 
+  useEffect(() => {
+    setLoading(true);
+    setError(null);
+
+    fetch(`/api/v1/stories?page=${page}&size=10`)
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Failed to load stories (${res.status})`);
+        return res.json();
+      })
+      .then((data) => {
+        setStories(data.content ?? []);
+        setHasNext(Boolean(data?.page?.totalPages ? page + 1 < data.page.totalPages : data?.totalPages ? page + 1 < data.totalPages : data?.last === false));
+      })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load stories'))
+      .finally(() => setLoading(false));
+  }, [page]);
+
+  if (loading) return <div className="p-5 max-w-4xl mx-auto">Loading stories...</div>;
+  if (error) return <div className="p-5 max-w-4xl mx-auto text-red-600">{error}</div>;
 
   return (
     <div className="p-5 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Library 📚</h1>
       <div className="grid gap-4">
+
+        <div className="flex gap-3 mt-6">
+          <button
+            className="border px-3 py-2 rounded disabled:opacity-50"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+          >
+            Prev
+          </button>
+          <button
+            className="border px-3 py-2 rounded disabled:opacity-50"
+            onClick={() => setPage((p) => p + 1)}
+            disabled={!hasNext}
+          >
+            Next
+          </button>
+        </div>
+
+        {stories.length === 0 && (
+          <div className="text-gray-600">No published stories yet.</div>
+        )}
+
         {stories.map(story => (
           <div key={story.id} className="border p-4 rounded shadow hover:shadow-md transition">
             <h2 className="text-xl font-semibold">
