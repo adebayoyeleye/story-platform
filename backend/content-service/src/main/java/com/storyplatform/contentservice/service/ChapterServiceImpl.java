@@ -90,4 +90,11 @@ public class ChapterServiceImpl implements ChapterService {
         }
         return chapter;
     }
+
+    @Override
+    public Chapter getDraftableById(String chapterId) {
+        return chapterRepository.findById(chapterId)
+            .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
+    }
+
 }
