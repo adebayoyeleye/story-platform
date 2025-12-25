@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Story } from '../types';
+import type { StorySummary } from '../types';
 
 export default function Home() {
-  const [stories, setStories] = useState<Story[]>([]);
-
+  const [stories, setStories] = useState<StorySummary[]>([]);
+  
   useEffect(() => {
-    fetch('/api/v1/stories')
+    fetch('/api/v1/stories?page=0&size=10')
       .then(res => res.json())
-      .then(data => setStories(data));
+      .then(data => setStories(data.content ?? []));
   }, []);
+
 
   return (
     <div className="p-5 max-w-4xl mx-auto">
@@ -22,7 +23,7 @@ export default function Home() {
                 {story.title}
               </Link>
             </h2>
-            <p className="text-gray-600">By {story.author}</p>
+            <p className="text-gray-600">By {story.authorId}</p>
             <p className="mt-2 text-gray-800">{story.synopsis}</p>
           </div>
         ))}
