@@ -16,7 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/v1/chapters")
+@RequestMapping("/v1")
 @Validated
 public class ChapterController {
 
@@ -26,12 +26,13 @@ public class ChapterController {
         this.chapterService = chapterService;
     }
 
-    @PostMapping
+    @PostMapping("/stories/{storyId}/chapters")
     public ResponseEntity<ChapterResponseDto> create(
+            @PathVariable String storyId,
             @Valid @RequestBody ChapterRequestDto request
     ) {
         Chapter chapter = new Chapter(
-                request.storyId(),
+                storyId,
                 request.title(),
                 request.content(),
                 request.chapterNumber(),
@@ -45,8 +46,9 @@ public class ChapterController {
                 .body(toResponse(saved));
     }
 
-    @PostMapping("/insert")
+    @PostMapping("/stories/{storyId}/chapters/insert")
     public ResponseEntity<ChapterResponseDto> insert(
+            @PathVariable String storyId,
             @Valid @RequestBody ChapterRequestDto request,
             @RequestParam int position
     ) {
@@ -60,7 +62,7 @@ public class ChapterController {
 
         Chapter saved =
                 chapterService.insertChapter(
-                        request.storyId(),
+                        storyId,
                         chapter,
                         position
                 );
@@ -70,7 +72,7 @@ public class ChapterController {
                 .body(toResponse(saved));
     }
 
-    @PatchMapping("/{chapterId}/status")
+    @PatchMapping("/chapters/{chapterId}/status")
     public ResponseEntity<ChapterResponseDto> updateStatus(
             @PathVariable String chapterId,
             @RequestParam ChapterStatus status
@@ -81,7 +83,7 @@ public class ChapterController {
         return ResponseEntity.ok(toResponse(updated));
     }
 
-    @GetMapping("/story/{storyId}")
+    @GetMapping("/stories/{storyId}/chapters")
     public ResponseEntity<Page<ChapterResponseDto>> getByStory(
             @PathVariable String storyId,
             Pageable pageable
