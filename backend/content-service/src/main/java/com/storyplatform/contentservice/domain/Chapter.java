@@ -64,4 +64,14 @@ public class Chapter {
         this.status = status;
         this.updatedAt = Instant.now();
     }
+
+    public void setTitle(String title2) {
+        this.title = title2;
+        this.updatedAt = Instant.now();
+    }
+
+    public void setContent(String content2) {
+        this.content = content2;
+        this.updatedAt = Instant.now();
+    }
 }

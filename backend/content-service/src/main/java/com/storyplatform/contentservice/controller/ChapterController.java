@@ -5,6 +5,7 @@ import com.storyplatform.contentservice.domain.ChapterStatus;
 import com.storyplatform.contentservice.dto.ChapterRequestDto;
 import com.storyplatform.contentservice.dto.ChapterResponseDto;
 import com.storyplatform.contentservice.dto.ChapterSummaryResponseDto;
+import com.storyplatform.contentservice.dto.ChapterUpdateRequestDto;
 import com.storyplatform.contentservice.service.ChapterService;
 
 import jakarta.validation.Valid;
@@ -71,6 +72,15 @@ public class ChapterController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(toResponse(saved));
+    }
+
+    @PutMapping("/admin/chapters/{chapterId}")
+    public ResponseEntity<ChapterResponseDto> updateDraft(
+            @PathVariable String chapterId,
+            @Valid @RequestBody ChapterUpdateRequestDto request
+    ) {
+        Chapter updated = chapterService.updateDraftContent(chapterId, request.title(), request.content());
+        return ResponseEntity.ok(toResponse(updated));
     }
 
     @PatchMapping("/chapters/{chapterId}/status")
