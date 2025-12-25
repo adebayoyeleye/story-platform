@@ -1,14 +1,11 @@
 package com.storyplatform.contentservice.dto;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.Min;
 
 public record ChapterRequestDto(
-        @NotBlank(message = "Story ID is required")
-        @Size(max = 36, message = "Story ID must be at most 36 characters")
-        String storyId,
 
         @NotBlank(message = "Title is required")
         @Size(max = 200, message = "Title must be at most 200 characters")
@@ -22,4 +19,3 @@ public record ChapterRequestDto(
         @Min(value = 1, message = "Chapter number must be at least 1")
         Integer chapterNumber
 ) {}
-
