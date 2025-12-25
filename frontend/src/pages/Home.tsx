@@ -31,7 +31,10 @@ export default function Home() {
 
   return (
     <div className="p-5 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6">Library 📚</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Library 📚</h1>
+        <Link to="/write" className="text-blue-600 hover:underline">Writer Mode</Link>
+      </div>
       <div className="grid gap-4">
 
         <div className="flex gap-3 mt-6">
