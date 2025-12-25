@@ -53,7 +53,7 @@ public class ChapterController {
             @RequestParam int position
     ) {
         Chapter chapter = new Chapter(
-                request.storyId(),
+                storyId,
                 request.title(),
                 request.content(),
                 position,
@@ -77,10 +77,9 @@ public class ChapterController {
             @PathVariable String chapterId,
             @RequestParam ChapterStatus status
     ) {
-        Chapter updated =
-                chapterService.updateStatus(chapterId, status);
+        chapterService.updateStatus(chapterId, status);
 
-        return ResponseEntity.ok(toResponse(updated));
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/stories/{storyId}/chapters")
