@@ -4,6 +4,7 @@ import com.storyplatform.contentservice.domain.Chapter;
 import com.storyplatform.contentservice.domain.ChapterStatus;
 import com.storyplatform.contentservice.dto.ChapterRequestDto;
 import com.storyplatform.contentservice.dto.ChapterResponseDto;
+import com.storyplatform.contentservice.dto.ChapterSummaryResponseDto;
 import com.storyplatform.contentservice.service.ChapterService;
 
 import jakarta.validation.Valid;
@@ -83,24 +84,39 @@ public class ChapterController {
     }
 
     @GetMapping("/stories/{storyId}/chapters")
-    public ResponseEntity<Page<ChapterResponseDto>> getByStory(
+    public ResponseEntity<Page<ChapterSummaryResponseDto>> getByStory(
             @PathVariable String storyId,
             Pageable pageable
     ) {
-        Page<ChapterResponseDto> result =
+        Page<ChapterSummaryResponseDto> result =
                 chapterService
                         .getChaptersByStory(storyId, pageable)
-                        .map(this::toResponse);
+                        .map(this::toSummaryResponse);
 
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/chapters/{chapterId}")
+    public ResponseEntity<ChapterResponseDto> getById(@PathVariable String chapterId) {
+        Chapter chapter = chapterService.getById(chapterId);
+        return ResponseEntity.ok(toResponse(chapter));
+    }
+    
     private ChapterResponseDto toResponse(Chapter chapter) {
         return new ChapterResponseDto(
                 chapter.getId(),
                 chapter.getStoryId(),
                 chapter.getTitle(),
                 chapter.getContent(),
+                chapter.getChapterNumber(),
+                chapter.getStatus()
+        );
+    }
+
+    private ChapterSummaryResponseDto toSummaryResponse(Chapter chapter) {
+        return new ChapterSummaryResponseDto(
+                chapter.getId(),
+                chapter.getTitle(),
                 chapter.getChapterNumber(),
                 chapter.getStatus()
         );

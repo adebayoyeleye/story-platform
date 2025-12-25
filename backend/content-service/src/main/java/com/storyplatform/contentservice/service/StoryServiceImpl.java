@@ -30,6 +30,12 @@ public class StoryServiceImpl implements StoryService {
     }
 
     @Override
+    public Story getById(String storyId) {
+        return storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
+    }
+
+    @Override
     public Story updateStatus(String storyId, StoryStatus status) {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story not found"));

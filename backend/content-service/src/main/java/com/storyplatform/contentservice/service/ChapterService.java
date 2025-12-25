@@ -14,4 +14,7 @@ public interface ChapterService {
     Chapter updateStatus(String chapterId, ChapterStatus status);
 
     Page<Chapter> getChaptersByStory(String storyId, Pageable pageable);
+
+    Chapter getById(String chapterId);
+
 }
