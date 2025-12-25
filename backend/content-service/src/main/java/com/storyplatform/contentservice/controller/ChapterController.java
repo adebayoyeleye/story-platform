@@ -84,6 +84,19 @@ public class ChapterController {
     }
 
     @GetMapping("/stories/{storyId}/chapters")
+    public ResponseEntity<Page<ChapterSummaryResponseDto>> getPublishedChaptersByStory(
+            @PathVariable String storyId,
+            Pageable pageable
+    ) {
+        Page<ChapterSummaryResponseDto> result =
+                chapterService
+                        .getPublishedChaptersByStory(storyId, pageable)
+                        .map(this::toSummaryResponse);
+
+        return ResponseEntity.ok(result);
+    }
+    
+    @GetMapping("/v1/admin/stories/{storyId}/chapters")
     public ResponseEntity<Page<ChapterSummaryResponseDto>> getByStory(
             @PathVariable String storyId,
             Pageable pageable

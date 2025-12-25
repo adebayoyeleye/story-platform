@@ -15,6 +15,8 @@ public interface ChapterService {
 
     Page<Chapter> getChaptersByStory(String storyId, Pageable pageable);
 
+    Page<Chapter> getPublishedChaptersByStory(String storyId, Pageable pageable);
+
     Chapter getDraftableById(String chapterId);
 
     Chapter getById(String chapterId);

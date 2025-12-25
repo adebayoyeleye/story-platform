@@ -81,6 +81,12 @@ public class ChapterServiceImpl implements ChapterService {
     }
 
     @Override
+    public Page<Chapter> getPublishedChaptersByStory(String storyId, Pageable pageable) {
+        return chapterRepository.findByStoryIdAndStatus(storyId, ChapterStatus.PUBLISHED, pageable);
+    }
+
+
+    @Override
     public Chapter getById(String chapterId) {
         Chapter chapter = chapterRepository.findById(chapterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
