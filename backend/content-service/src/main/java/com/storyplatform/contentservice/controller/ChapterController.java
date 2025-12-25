@@ -101,6 +101,12 @@ public class ChapterController {
         Chapter chapter = chapterService.getById(chapterId);
         return ResponseEntity.ok(toResponse(chapter));
     }
+
+    @GetMapping("/admin/chapters/{chapterId}")
+    public ResponseEntity<ChapterResponseDto> getDraftableById(@PathVariable String chapterId) {
+        Chapter chapter = chapterService.getDraftableById(chapterId);
+        return ResponseEntity.ok(toResponse(chapter));
+    }
     
     private ChapterResponseDto toResponse(Chapter chapter) {
         return new ChapterResponseDto(

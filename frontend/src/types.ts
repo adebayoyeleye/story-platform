@@ -1,12 +1,23 @@
-export interface Chapter {
-    title: string;
-    content: string;
-}
+export type StorySummary = {
+  id: string;
+  title: string;
+  authorId: string;
+  synopsis: string;
+  status: 'DRAFT' | 'ONGOING' | 'COMPLETED' | 'ARCHIVED';
+};
 
-export interface Story {
-    id?: string; // Optional because MongoDB generates it
-    title: string;
-    author: string;
-    synopsis: string;
-    chapters: Chapter[];
-}
+export type ChapterSummary = {
+  id: string;
+  title: string;
+  chapterNumber: number;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+};
+
+export type Chapter = {
+  id: string;
+  storyId: string;
+  title: string;
+  content: string;
+  chapterNumber: number;
+  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+};
