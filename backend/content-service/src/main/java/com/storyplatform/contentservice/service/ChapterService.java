@@ -11,6 +11,8 @@ public interface ChapterService {
 
     Chapter insertChapter(String storyId, Chapter chapter, int position);
 
+    Chapter updateDraftContent(String chapterId, String title, String content);
+
     Chapter updateStatus(String chapterId, ChapterStatus status);
 
     Page<Chapter> getChaptersByStory(String storyId, Pageable pageable);

@@ -67,6 +67,20 @@ public class ChapterServiceImpl implements ChapterService {
     }
 
     @Override
+    public Chapter updateDraftContent(String chapterId, String title, String content) {
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
+
+        if (chapter.getStatus() == ChapterStatus.PUBLISHED) {
+            throw new IllegalArgumentException("Cannot edit a published chapter in Phase 1");
+        }
+
+        chapter.setTitle(title);
+        chapter.setContent(content);
+        return chapterRepository.save(chapter);
+    }
+
+    @Override
     public Chapter updateStatus(String chapterId, ChapterStatus status) {
         Chapter chapter = chapterRepository.findById(chapterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
