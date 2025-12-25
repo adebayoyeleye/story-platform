@@ -60,6 +60,12 @@ public class StoryController {
         return ResponseEntity.ok(result);
     }
 
+    @GetMapping("/{storyId}")
+        public ResponseEntity<StoryResponseDto> getById(@PathVariable String storyId) {
+                Story story = storyService.getById(storyId);
+                return ResponseEntity.ok(toResponse(story));
+        }
+
     @PatchMapping("/{storyId}/status")
     public ResponseEntity<StoryResponseDto> updateStatus(
             @PathVariable String storyId,

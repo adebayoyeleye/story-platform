@@ -69,7 +69,7 @@ public class ChapterServiceImpl implements ChapterService {
     @Override
     public Chapter updateStatus(String chapterId, ChapterStatus status) {
         Chapter chapter = chapterRepository.findById(chapterId)
-                .orElseThrow(() -> new IllegalArgumentException("Chapter not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
 
         chapter.setStatus(status);
         return chapterRepository.save(chapter);
@@ -78,5 +78,16 @@ public class ChapterServiceImpl implements ChapterService {
     @Override
     public Page<Chapter> getChaptersByStory(String storyId, Pageable pageable) {
         return chapterRepository.findByStoryId(storyId, pageable);
+    }
+
+    @Override
+    public Chapter getById(String chapterId) {
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
+
+        if (chapter.getStatus() != ChapterStatus.PUBLISHED) {
+            throw new ResourceNotFoundException("Chapter not found");
+        }
+        return chapter;
     }
 }
