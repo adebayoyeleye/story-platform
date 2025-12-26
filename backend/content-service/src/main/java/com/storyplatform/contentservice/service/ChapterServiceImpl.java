@@ -2,9 +2,11 @@ package com.storyplatform.contentservice.service;
 
 import com.storyplatform.contentservice.domain.Chapter;
 import com.storyplatform.contentservice.domain.ChapterStatus;
-
+import com.storyplatform.contentservice.domain.Story;
+import com.storyplatform.contentservice.domain.StoryStatus;
 import com.storyplatform.contentservice.exception.ResourceNotFoundException;
 import com.storyplatform.contentservice.repository.ChapterRepository;
+import com.storyplatform.contentservice.repository.StoryRepository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,11 +18,11 @@ import java.util.List;
 public class ChapterServiceImpl implements ChapterService {
 
     private final ChapterRepository chapterRepository;
+    private final StoryRepository storyRepository;
 
-    public ChapterServiceImpl(
-            ChapterRepository chapterRepository
-    ) {
+    public ChapterServiceImpl(ChapterRepository chapterRepository, StoryRepository storyRepository) {
         this.chapterRepository = chapterRepository;
+        this.storyRepository = storyRepository;
     }
 
     @Override
@@ -75,15 +77,38 @@ public class ChapterServiceImpl implements ChapterService {
         Chapter chapter = chapterRepository.findById(chapterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
 
+        ChapterStatus previous = chapter.getStatus();
+        
+        // validate publish
         if (status == ChapterStatus.PUBLISHED) {
             String c = chapter.getContent();
             if (c == null || c.trim().isEmpty()) {
                 throw new IllegalArgumentException("Cannot publish an empty chapter");
             }
         }
-
+        
+        // if no change, return
+        if (previous == status) {
+            return chapter;
+        }
+        
         chapter.setStatus(status);
-        return chapterRepository.save(chapter);
+        Chapter saved = chapterRepository.save(chapter);
+        
+        // Story status automation (Phase 1)
+        if (previous != ChapterStatus.PUBLISHED && status == ChapterStatus.PUBLISHED) {
+            Story story = storyRepository.findById(saved.getStoryId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
+        
+            // First publish moves DRAFT -> ONGOING
+            if (story.getStatus() == StoryStatus.DRAFT) {
+                story.setStatus(StoryStatus.ONGOING);
+                storyRepository.save(story);
+            }
+        }
+        
+        return saved;
+
     }
 
     @Override
