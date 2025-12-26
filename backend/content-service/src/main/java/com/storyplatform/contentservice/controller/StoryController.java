@@ -75,6 +75,18 @@ public class StoryController {
         return ResponseEntity.ok(toResponse(updated));
     }
 
+    @GetMapping("/admin")
+    public ResponseEntity<Page<StoryResponseDto>> getStoriesByAuthor(
+        @RequestParam String authorId,
+        Pageable pageable
+    ) {
+        Page<StoryResponseDto> result =
+                storyService.getStoriesByAuthor(authorId, pageable)
+                        .map(this::toResponse);
+
+        return ResponseEntity.ok(result);
+    }
+
     private StoryResponseDto toResponse(Story story) {
         return new StoryResponseDto(
                 story.getId(),

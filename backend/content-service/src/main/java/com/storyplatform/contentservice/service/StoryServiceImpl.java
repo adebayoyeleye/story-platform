@@ -44,6 +44,12 @@ public class StoryServiceImpl implements StoryService {
         return storyRepository.save(story);
     }
 
+    @Override
+    public Page<Story> getStoriesByAuthor(String authorId, Pageable pageable) {
+        enforcePageSize(pageable);
+        return storyRepository.findByAuthorId(authorId, pageable);
+    }
+
     private void enforcePageSize(Pageable pageable) {
         if (pageable.getPageSize() > 50) {
             throw new IllegalArgumentException("Page size cannot exceed 50");
