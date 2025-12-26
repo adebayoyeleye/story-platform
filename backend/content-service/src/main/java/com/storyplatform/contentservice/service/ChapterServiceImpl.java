@@ -2,10 +2,9 @@ package com.storyplatform.contentservice.service;
 
 import com.storyplatform.contentservice.domain.Chapter;
 import com.storyplatform.contentservice.domain.ChapterStatus;
-import com.storyplatform.contentservice.domain.Story;
+
 import com.storyplatform.contentservice.exception.ResourceNotFoundException;
 import com.storyplatform.contentservice.repository.ChapterRepository;
-import com.storyplatform.contentservice.repository.StoryRepository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,14 +16,11 @@ import java.util.List;
 public class ChapterServiceImpl implements ChapterService {
 
     private final ChapterRepository chapterRepository;
-    private final StoryRepository storyRepository;
 
     public ChapterServiceImpl(
-            ChapterRepository chapterRepository,
-            StoryRepository storyRepository
+            ChapterRepository chapterRepository
     ) {
         this.chapterRepository = chapterRepository;
-        this.storyRepository = storyRepository;
     }
 
     @Override
@@ -43,9 +39,6 @@ public class ChapterServiceImpl implements ChapterService {
             throw new IllegalArgumentException("Chapter position must be >= 1");
         }
 
-        Story story = storyRepository.findById(storyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
-
         List<Chapter> chapters = chapterRepository
                 .findByStoryId(storyId, Pageable.unpaged())
                 .getContent();
@@ -59,9 +52,6 @@ public class ChapterServiceImpl implements ChapterService {
 
         chapter.setChapterNumber(position);
         Chapter saved = chapterRepository.save(chapter);
-
-        story.getChapterIds().add(position - 1, saved.getId());
-        storyRepository.save(story);
 
         return saved;
     }
