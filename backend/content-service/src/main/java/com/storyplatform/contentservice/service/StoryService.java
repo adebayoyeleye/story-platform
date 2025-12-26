@@ -14,4 +14,7 @@ public interface StoryService {
     Story getById(String storyId);
 
     Story updateStatus(String storyId, StoryStatus status);
+
+    Page<Story> getStoriesByAuthor(String authorId, Pageable pageable);
+
 }
