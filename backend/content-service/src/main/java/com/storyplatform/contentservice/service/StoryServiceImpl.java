@@ -5,6 +5,8 @@ import com.storyplatform.contentservice.domain.StoryStatus;
 import com.storyplatform.contentservice.exception.ResourceNotFoundException;
 import com.storyplatform.contentservice.repository.StoryRepository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,7 +28,10 @@ public class StoryServiceImpl implements StoryService {
     @Override
     public Page<Story> getStories(Pageable pageable) {
         enforcePageSize(pageable);
-        return storyRepository.findAll(pageable);
+        return storyRepository.findByStatusIn(
+                List.of(StoryStatus.ONGOING, StoryStatus.COMPLETED),
+                pageable
+        );
     }
 
     @Override
