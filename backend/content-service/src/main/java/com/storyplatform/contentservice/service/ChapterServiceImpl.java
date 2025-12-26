@@ -85,6 +85,13 @@ public class ChapterServiceImpl implements ChapterService {
         Chapter chapter = chapterRepository.findById(chapterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
 
+        if (status == ChapterStatus.PUBLISHED) {
+            String c = chapter.getContent();
+            if (c == null || c.trim().isEmpty()) {
+                throw new IllegalArgumentException("Cannot publish an empty chapter");
+            }
+        }
+
         chapter.setStatus(status);
         return chapterRepository.save(chapter);
     }
