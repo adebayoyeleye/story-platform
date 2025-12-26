@@ -63,8 +63,8 @@ public class ChapterServiceImpl implements ChapterService {
         Chapter chapter = chapterRepository.findById(chapterId)
                 .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
 
-        if (chapter.getStatus() == ChapterStatus.PUBLISHED) {
-            throw new IllegalArgumentException("Cannot edit a published chapter in Phase 1");
+        if (chapter.getStatus() != ChapterStatus.DRAFT) {
+            throw new IllegalArgumentException("Only DRAFT chapters can be edited");
         }
 
         chapter.setTitle(title);
