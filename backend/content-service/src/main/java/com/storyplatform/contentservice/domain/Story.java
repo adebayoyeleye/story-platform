@@ -4,8 +4,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 @Document(collection = "stories")
 public class Story {
@@ -17,9 +15,6 @@ public class Story {
     private String authorId;
     private String synopsis;
     private StoryStatus status;
-
-    private List<String> chapterIds = new ArrayList<>();
-
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -40,7 +35,6 @@ public class Story {
     public String getAuthorId() { return authorId; }
     public String getSynopsis() { return synopsis; }
     public StoryStatus getStatus() { return status; }
-    public List<String> getChapterIds() { return chapterIds; }
 
     // controlled mutations
     public void setStatus(StoryStatus status) {
