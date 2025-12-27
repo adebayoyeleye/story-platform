@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { apiGet, apiPost, apiPut, apiPatchNoContent } from '../api';
+import { apiGet, apiPost, apiPut, apiPatchNoContent, ApiError } from '../api';
 import type { StorySummary, ChapterSummary, Chapter } from '../types';
 
 export default function WriterStory() {
@@ -8,6 +8,7 @@ export default function WriterStory() {
   const [story, setStory] = useState<StorySummary | null>(null);
   const [chapters, setChapters] = useState<ChapterSummary[]>([]);
   const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
@@ -21,6 +22,7 @@ export default function WriterStory() {
   async function refresh() {
     if (!storyId) return;
     setError(null);
+    setFieldErrors({});
     try {
       const [s, list] = await Promise.all([
         apiGet<StorySummary>(`/api/v1/stories/${storyId}`),
@@ -38,6 +40,7 @@ export default function WriterStory() {
   async function createDraftChapter() {
     if (!storyId) return;
     setError(null);
+    setFieldErrors({});
     try {
       await apiPost(`/api/v1/stories/${storyId}/chapters`, {
         // ChapterRequestDto currently expects title/content/chapterNumber only in your frontend flow
@@ -47,12 +50,18 @@ export default function WriterStory() {
       });
       await refresh();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create chapter');
+      if (err instanceof ApiError) {
+        setError(err.message);
+        setFieldErrors(err.fieldErrors);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to create chapter');
+      }
     }
   }
 
   async function openChapter(chapterId: string) {
     setError(null);
+    setFieldErrors({});
     try {
       // Admin read draft content
       const full = await apiGet<Chapter>(`/api/v1/admin/chapters/${chapterId}`);
@@ -67,6 +76,7 @@ export default function WriterStory() {
   async function saveDraft() {
     if (!selectedChapter) return;
     setError(null);
+    setFieldErrors({});
     try {
       const updated = await apiPut<Chapter>(`/api/v1/admin/chapters/${selectedChapter.id}`, {
         title: newTitle,
@@ -75,12 +85,18 @@ export default function WriterStory() {
       setSelectedChapter(updated);
       await refresh();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to save');
+      if (err instanceof ApiError) {
+        setError(err.message);
+        setFieldErrors(err.fieldErrors);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to save');
+      }
     }
   }
 
   async function publishChapter(chapterId: string) {
     setError(null);
+    setFieldErrors({});
     try {
       await apiPatchNoContent(`/api/v1/chapters/${chapterId}/status?status=PUBLISHED`);
       await refresh();
@@ -88,12 +104,13 @@ export default function WriterStory() {
         setSelectedChapter(null);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to publish');
+      if (err instanceof ApiError) {
+        setError(err.message);
+        setFieldErrors(err.fieldErrors);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to publish chapter');
+      }
     }
-  }
-
-  if (error) {
-    return <div className="p-5 max-w-4xl mx-auto text-red-600">{error}</div>;
   }
 
   if (!storyId) return <div className="p-5 max-w-4xl mx-auto">Missing story id</div>;
@@ -105,6 +122,7 @@ export default function WriterStory() {
         <div>
           <h1 className="text-3xl font-bold">{story.title}</h1>
           <div className="text-gray-600">Author: {story.authorId}</div>
+          {error && <div className="text-red-600 mb-4">{error}</div>}
         </div>
         <div className="flex gap-3">
           <Link to="/" className="text-blue-600 hover:underline">Library</Link>
@@ -169,6 +187,9 @@ export default function WriterStory() {
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
               />
+              {fieldErrors.title && (
+                <div className="text-red-600 text-sm">{fieldErrors.title}</div>
+              )}
 
               <textarea
                 className="border p-2 rounded"
@@ -176,6 +197,9 @@ export default function WriterStory() {
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
               />
+              {fieldErrors.content && (
+                <div className="text-red-600 text-sm">{fieldErrors.content}</div>
+              )}
 
               <div className="flex gap-3">
                 <button className="border px-3 py-2 rounded" onClick={saveDraft}>

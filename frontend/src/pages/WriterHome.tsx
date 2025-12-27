@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { apiGet, apiPost } from '../api';
+import { ApiError, apiGet, apiPost } from '../api';
 import type { StorySummary } from '../types';
 
 export default function WriterHome() {
@@ -11,6 +11,7 @@ export default function WriterHome() {
   const [error, setError] = useState<string | null>(null);
   const [myStories, setMyStories] = useState<StorySummary[]>([]);
   const [loadingMine, setLoadingMine] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   async function loadMyStories() {
     if (!authorId) {
@@ -36,13 +37,19 @@ export default function WriterHome() {
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setFieldErrors({});
 
     try {
       const story = await apiPost<StorySummary>('/api/v1/stories', { title, authorId, synopsis });
       nav(`/write/story/${story.id}`);
       await loadMyStories();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to create story');
+      if (err instanceof ApiError) {
+        setError(err.message);
+        setFieldErrors(err.fieldErrors);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to create story');
+      }
     }
   }
 
@@ -63,6 +70,7 @@ export default function WriterHome() {
           onChange={(e) => setTitle(e.target.value)}
           required
         />
+        {fieldErrors.title && <div className="text-red-600 text-sm">{fieldErrors.title}</div>}
         <input
           className="border p-2 rounded"
           placeholder="Author id (temporary)"
@@ -70,6 +78,7 @@ export default function WriterHome() {
           onChange={(e) => setAuthorId(e.target.value)}
           required
         />
+        {fieldErrors.authorId && <div className="text-red-600 text-sm">{fieldErrors.authorId}</div>}
         <textarea
           className="border p-2 rounded"
           placeholder="Synopsis"
@@ -77,6 +86,7 @@ export default function WriterHome() {
           onChange={(e) => setSynopsis(e.target.value)}
           rows={4}
         />
+        {fieldErrors.synopsis && <div className="text-red-600 text-sm">{fieldErrors.synopsis}</div>}
         <button className="border px-3 py-2 rounded">Create Story</button>
       </form>
 
