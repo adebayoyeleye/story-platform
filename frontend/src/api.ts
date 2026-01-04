@@ -67,3 +67,13 @@ export async function apiPatchNoContent(url: string): Promise<void> {
   const res = await fetch(url, { method: 'PATCH' });
   if (!res.ok) throw await parseApiError(res);
 }
+
+export async function apiPatchJson<T>(url: string, body?: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw await parseApiError(res);
+  return res.json();
+}
