@@ -44,6 +44,18 @@ public class StoryServiceImpl implements StoryService {
     public Story updateStatus(String storyId, StoryStatus status) {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
+        
+        StoryStatus current = story.getStatus();
+
+        boolean allowed =  
+            (current == StoryStatus.DRAFT && (status == StoryStatus.ONGOING || status == StoryStatus.ARCHIVED)) 
+            || (current == StoryStatus.ONGOING && (status == StoryStatus.COMPLETED || status == StoryStatus.ARCHIVED)) 
+            || (current == StoryStatus.COMPLETED && (status == StoryStatus.ONGOING || status == StoryStatus.ARCHIVED)) 
+            || (current == StoryStatus.ARCHIVED && status == StoryStatus.ONGOING);
+
+        if (!allowed) {
+            throw new IllegalArgumentException("Invalid story status transition: " + current + " -> " + status);
+        }
 
         story.setStatus(status);
         return storyRepository.save(story);
