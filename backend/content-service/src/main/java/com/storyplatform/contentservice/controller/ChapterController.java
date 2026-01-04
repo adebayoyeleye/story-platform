@@ -36,7 +36,7 @@ public class ChapterController {
         Chapter chapter = new Chapter(
                 storyId,
                 request.title(),
-                request.content() == null ? "" : request.content(),
+                request.content(), // == null ? "" : request.content(),
                 request.chapterNumber(),
                 ChapterStatus.DRAFT
         );
@@ -57,7 +57,7 @@ public class ChapterController {
         Chapter chapter = new Chapter(
                 storyId,
                 request.title(),
-                request.content() == null ? "" : request.content(),
+                request.content(), // == null ? "" : request.content(),
                 position,
                 ChapterStatus.DRAFT
         );
