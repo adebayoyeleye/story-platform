@@ -78,7 +78,26 @@ public class ChapterServiceImpl implements ChapterService {
                 .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
 
         ChapterStatus previous = chapter.getStatus();
-        
+
+        // no-op
+        if (previous == status) {
+            return chapter;
+        }
+
+        boolean allowed =
+                (previous == ChapterStatus.DRAFT
+                        && (status == ChapterStatus.PUBLISHED || status == ChapterStatus.ARCHIVED))
+            || (previous == ChapterStatus.PUBLISHED
+                        && status == ChapterStatus.ARCHIVED)
+            || (previous == ChapterStatus.ARCHIVED
+                        && status == ChapterStatus.PUBLISHED);
+
+        if (!allowed) {
+            throw new IllegalArgumentException(
+                    "Invalid chapter status transition: " + previous + " -> " + status
+            );
+        }
+
         // validate publish
         if (status == ChapterStatus.PUBLISHED) {
             String c = chapter.getContent();
@@ -86,29 +105,22 @@ public class ChapterServiceImpl implements ChapterService {
                 throw new IllegalArgumentException("Cannot publish an empty chapter");
             }
         }
-        
-        // if no change, return
-        if (previous == status) {
-            return chapter;
-        }
-        
+
         chapter.setStatus(status);
         Chapter saved = chapterRepository.save(chapter);
-        
-        // Story status automation (Phase 1)
+
+        // Story status automation (Phase 1): first publish flips story DRAFT -> ONGOING
         if (previous != ChapterStatus.PUBLISHED && status == ChapterStatus.PUBLISHED) {
             Story story = storyRepository.findById(saved.getStoryId())
                     .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
-        
-            // First publish moves DRAFT -> ONGOING
+
             if (story.getStatus() == StoryStatus.DRAFT) {
                 story.setStatus(StoryStatus.ONGOING);
                 storyRepository.save(story);
             }
         }
-        
-        return saved;
 
+        return saved;
     }
 
     @Override
