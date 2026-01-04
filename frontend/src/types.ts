@@ -1,16 +1,19 @@
+export type StoryStatus = 'DRAFT' | 'ONGOING' | 'COMPLETED' | 'ARCHIVED';
+export type ChapterStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+
 export type StorySummary = {
   id: string;
   title: string;
   authorId: string;
-  synopsis: string;
-  status: 'DRAFT' | 'ONGOING' | 'COMPLETED' | 'ARCHIVED';
+  synopsis?: string | null;
+  status: StoryStatus;
 };
 
 export type ChapterSummary = {
   id: string;
   title: string;
   chapterNumber: number;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  status: ChapterStatus;
 };
 
 export type Chapter = {
@@ -19,5 +22,5 @@ export type Chapter = {
   title: string;
   content: string;
   chapterNumber: number;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  status: ChapterStatus;
 };

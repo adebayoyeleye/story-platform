@@ -94,22 +94,48 @@ export default function WriterStory() {
     }
   }
 
-  async function publishChapter(chapterId: string) {
+  async function setChapterStatus(chapterId: string, status: 'PUBLISHED' | 'ARCHIVED') {
     setError(null);
     setFieldErrors({});
     try {
-      await apiPatchNoContent(`/api/v1/chapters/${chapterId}/status?status=PUBLISHED`);
+      await apiPatchNoContent(`/api/v1/chapters/${chapterId}/status?status=${status}`);
       await refresh();
-      if (selectedChapter?.id === chapterId) {
-        setSelectedChapter(null);
-      }
+      if (selectedChapter?.id === chapterId) setSelectedChapter(null);
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setError(err.message);
         setFieldErrors(err.fieldErrors);
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to publish chapter');
+        setError(err instanceof Error ? err.message : `Failed to set chapter status to ${status}`);
       }
+    }
+  }
+
+  async function publishChapter(chapterId: string) {
+    await setChapterStatus(chapterId, 'PUBLISHED');
+  }
+
+  async function archiveChapter(chapterId: string) {
+    await setChapterStatus(chapterId, 'ARCHIVED');
+  }
+
+  async function restoreChapter(chapterId: string) {
+    await setChapterStatus(chapterId, 'PUBLISHED');
+  }
+
+  async function updateStoryStatus(next: StorySummary['status']) {
+    if (!storyId) return;
+    setError(null);
+    setFieldErrors({});
+    try {
+      const res = await fetch(`/api/v1/stories/${storyId}/status?status=${encodeURIComponent(next)}`, {
+        method: 'PATCH',
+      });
+      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+      const patched = (await res.json()) as StorySummary;
+      setStory(patched);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update story status');
     }
   }
 
@@ -122,8 +148,23 @@ export default function WriterStory() {
         <div>
           <h1 className="text-3xl font-bold">{story.title}</h1>
           <div className="text-gray-600">Author: {story.authorId}</div>
+          <div className="mt-2 flex items-center gap-2">
+            <label className="text-sm text-gray-600">Story status:</label>
+            <select
+              className="border rounded px-2 py-1"
+              value={story.status}
+              onChange={(e) => updateStoryStatus(e.target.value as StorySummary['status'])}
+            >
+              <option value="DRAFT">DRAFT</option>
+              <option value="ONGOING">ONGOING</option>
+              <option value="COMPLETED">COMPLETED</option>
+              <option value="ARCHIVED">ARCHIVED</option>
+            </select>
+          </div>
           {error && <div className="text-red-600 mb-4">{error}</div>}
         </div>
+        
+
         <div className="flex gap-3">
           <Link to="/" className="text-blue-600 hover:underline">Library</Link>
           <Link to="/write" className="text-blue-600 hover:underline">Writer Home</Link>
@@ -153,7 +194,7 @@ export default function WriterStory() {
                     <div className="text-sm text-gray-600">Status: {ch.status}</div>
                   </button>
 
-                  {ch.status !== 'PUBLISHED' && (
+                  {ch.status === 'DRAFT' && (
                     <button
                       className="border px-2 py-1 rounded"
                       onClick={() => publishChapter(ch.id)}
@@ -161,6 +202,25 @@ export default function WriterStory() {
                       Publish
                     </button>
                   )}
+
+                  {ch.status === 'PUBLISHED' && (
+                    <button
+                      className="border px-2 py-1 rounded"
+                      onClick={() => archiveChapter(ch.id)}
+                    >
+                      Archive
+                    </button>
+                  )}
+
+                  {ch.status === 'ARCHIVED' && (
+                    <button
+                      className="border px-2 py-1 rounded"
+                      onClick={() => restoreChapter(ch.id)}
+                    >
+                      Restore
+                    </button>
+                  )}
+                  
                 </div>
               ))}
           </div>
