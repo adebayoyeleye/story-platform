@@ -32,7 +32,7 @@ export default function WriterStory() {
     setFieldErrors({});
     try {
       const [s, list] = await Promise.all([
-        apiGet<StorySummary>(`/api/v1/stories/${storyId}`),
+        apiGet<StorySummary>(`/api/v1/stories/admin/${storyId}`),
         apiGet<any>(`/api/v1/admin/stories/${storyId}/chapters?page=0&size=200`)
       ]);
       setStory(s);

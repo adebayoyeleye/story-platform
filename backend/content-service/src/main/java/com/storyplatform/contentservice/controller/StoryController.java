@@ -45,6 +45,9 @@ public class StoryController {
                 .body(toResponse(saved));
     }
 
+    /**
+     * Public library listing: only ONGOING/COMPLETED (already enforced in service)
+     */
     @GetMapping
     public ResponseEntity<Page<StoryResponseDto>> getStories(
             @PageableDefault(
@@ -60,11 +63,23 @@ public class StoryController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Public story read: only ONGOING/COMPLETED; otherwise return 404
+     */
     @GetMapping("/{storyId}")
-        public ResponseEntity<StoryResponseDto> getById(@PathVariable String storyId) {
-                Story story = storyService.getById(storyId);
-                return ResponseEntity.ok(toResponse(story));
-        }
+    public ResponseEntity<StoryResponseDto> getById(@PathVariable String storyId) {
+        Story story = storyService.getPublicById(storyId);
+        return ResponseEntity.ok(toResponse(story));
+    }
+
+    /**
+     * Writer/Admin story read: can load DRAFT/ARCHIVED too
+     */
+    @GetMapping("/admin/{storyId}")
+    public ResponseEntity<StoryResponseDto> getByIdAdmin(@PathVariable String storyId) {
+        Story story = storyService.getAdminById(storyId);
+        return ResponseEntity.ok(toResponse(story));
+    }
 
     @PatchMapping("/{storyId}/status")
     public ResponseEntity<StoryResponseDto> updateStatus(
@@ -75,10 +90,13 @@ public class StoryController {
         return ResponseEntity.ok(toResponse(updated));
     }
 
+    /**
+     * Writer/Admin listing by authorId (your current endpoint)
+     */
     @GetMapping("/admin")
     public ResponseEntity<Page<StoryResponseDto>> getStoriesByAuthor(
-        @RequestParam String authorId,
-        Pageable pageable
+            @RequestParam String authorId,
+            Pageable pageable
     ) {
         Page<StoryResponseDto> result =
                 storyService.getStoriesByAuthor(authorId, pageable)
