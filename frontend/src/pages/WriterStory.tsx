@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { apiGet, apiPost, apiPut, apiPatchNoContent, ApiError } from '../api';
+import {
+  apiGet,
+  apiPost,
+  apiPut,
+  apiPatchNoContent,
+  apiPatchJson,
+  ApiError
+} from '../api';
 import type { StorySummary, ChapterSummary, Chapter } from '../types';
 
 export default function WriterStory() {
@@ -35,7 +42,9 @@ export default function WriterStory() {
     }
   }
 
-  useEffect(() => { refresh(); }, [storyId]);
+  useEffect(() => {
+    refresh();
+  }, [storyId]);
 
   async function createDraftChapter() {
     if (!storyId) return;
@@ -43,7 +52,6 @@ export default function WriterStory() {
     setFieldErrors({});
     try {
       await apiPost(`/api/v1/stories/${storyId}/chapters`, {
-        // ChapterRequestDto currently expects title/content/chapterNumber only in your frontend flow
         title: `Chapter ${nextChapterNumber}`,
         content: '',
         chapterNumber: nextChapterNumber
@@ -63,7 +71,6 @@ export default function WriterStory() {
     setError(null);
     setFieldErrors({});
     try {
-      // Admin read draft content
       const full = await apiGet<Chapter>(`/api/v1/admin/chapters/${chapterId}`);
       setSelectedChapter(full);
       setNewTitle(full.title);
@@ -80,7 +87,7 @@ export default function WriterStory() {
     try {
       const updated = await apiPut<Chapter>(`/api/v1/admin/chapters/${selectedChapter.id}`, {
         title: newTitle,
-        content: newContent,
+        content: newContent
       });
       setSelectedChapter(updated);
       await refresh();
@@ -128,26 +135,36 @@ export default function WriterStory() {
     setError(null);
     setFieldErrors({});
     try {
-      const res = await fetch(`/api/v1/stories/${storyId}/status?status=${encodeURIComponent(next)}`, {
-        method: 'PATCH',
-      });
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const patched = (await res.json()) as StorySummary;
+      const patched = await apiPatchJson<StorySummary>(
+        `/api/v1/stories/${storyId}/status?status=${encodeURIComponent(next)}`
+      );
       setStory(patched);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update story status');
+      if (err instanceof ApiError) {
+        setError(err.message);
+        setFieldErrors(err.fieldErrors);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to update story status');
+      }
     }
   }
 
   if (!storyId) return <div className="p-5 max-w-4xl mx-auto">Missing story id</div>;
   if (!story) return <div className="p-5 max-w-4xl mx-auto">Loading...</div>;
 
+  const canEdit = selectedChapter?.status === 'DRAFT';
+
   return (
     <div className="p-5 max-w-6xl mx-auto grid gap-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">{story.title}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">{story.title}</h1>
+            <span className="text-xs border rounded px-2 py-1 text-gray-700">{story.status}</span>
+          </div>
+
           <div className="text-gray-600">Author: {story.authorId}</div>
+
           <div className="mt-2 flex items-center gap-2">
             <label className="text-sm text-gray-600">Story status:</label>
             <select
@@ -161,9 +178,9 @@ export default function WriterStory() {
               <option value="ARCHIVED">ARCHIVED</option>
             </select>
           </div>
-          {error && <div className="text-red-600 mb-4">{error}</div>}
+
+          {error && <div className="text-red-600 mt-3">{error}</div>}
         </div>
-        
 
         <div className="flex gap-3">
           <Link to="/" className="text-blue-600 hover:underline">Library</Link>
@@ -195,32 +212,22 @@ export default function WriterStory() {
                   </button>
 
                   {ch.status === 'DRAFT' && (
-                    <button
-                      className="border px-2 py-1 rounded"
-                      onClick={() => publishChapter(ch.id)}
-                    >
+                    <button className="border px-2 py-1 rounded" onClick={() => publishChapter(ch.id)}>
                       Publish
                     </button>
                   )}
 
                   {ch.status === 'PUBLISHED' && (
-                    <button
-                      className="border px-2 py-1 rounded"
-                      onClick={() => archiveChapter(ch.id)}
-                    >
+                    <button className="border px-2 py-1 rounded" onClick={() => archiveChapter(ch.id)}>
                       Archive
                     </button>
                   )}
 
                   {ch.status === 'ARCHIVED' && (
-                    <button
-                      className="border px-2 py-1 rounded"
-                      onClick={() => restoreChapter(ch.id)}
-                    >
+                    <button className="border px-2 py-1 rounded" onClick={() => restoreChapter(ch.id)}>
                       Restore
                     </button>
                   )}
-                  
                 </div>
               ))}
           </div>
@@ -242,29 +249,38 @@ export default function WriterStory() {
                 Editing: Chapter {selectedChapter.chapterNumber} ({selectedChapter.status})
               </div>
 
+              {!canEdit && (
+                <div className="text-sm text-gray-600">
+                  Published/archived chapters are read-only in Phase 1.
+                </div>
+              )}
+
               <input
                 className="border p-2 rounded"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
+                disabled={!canEdit}
               />
-              {fieldErrors.title && (
-                <div className="text-red-600 text-sm">{fieldErrors.title}</div>
-              )}
+              {fieldErrors.title && <div className="text-red-600 text-sm">{fieldErrors.title}</div>}
 
               <textarea
                 className="border p-2 rounded"
                 rows={12}
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
+                disabled={!canEdit}
               />
-              {fieldErrors.content && (
-                <div className="text-red-600 text-sm">{fieldErrors.content}</div>
-              )}
+              {fieldErrors.content && <div className="text-red-600 text-sm">{fieldErrors.content}</div>}
 
               <div className="flex gap-3">
-                <button className="border px-3 py-2 rounded" onClick={saveDraft}>
+                <button
+                  className="border px-3 py-2 rounded disabled:opacity-50"
+                  onClick={saveDraft}
+                  disabled={!canEdit}
+                >
                   Save Draft
                 </button>
+
                 <Link className="border px-3 py-2 rounded" to={`/story/${storyId}`}>
                   View Public Story
                 </Link>
