@@ -1,68 +1,104 @@
 # System Architecture
 
-## Architectural Goal
-High availability, eventual consistency for reads, strict consistency for writes.
+## Architectural Goal (Phase 1)
+Deliver a clean, deployable walking skeleton that demonstrates:
+- separation of frontend/backend concerns
+- correct REST patterns + lifecycle/status workflows
+- reliable deployment automation
+- stable error handling for UI display
 
-## Core Components
-
-### Frontend
-- React 19 (TypeScript, Vite)
-- Feature-based folder structure
-
-### Backend
-- Java Spring Boot (content-service)
-- Layered architecture:
-  Controller → Service → Repository → DTO
-
-### Database
-- MongoDB (NoSQL)
-- Flexible schema for story content
-- High read throughput
-
-### Authentication (Future)
-- Spring Security + JWT (Stateless) or OAuth2
-
-### Caching (Future Scale)
-- Redis for hot stories and session tokens
-
-### CDN (Future Scale)
-- S3 + CloudFront (or equivalent)
+Phase 1 prioritizes correctness and end-to-end workflow over advanced features.
 
 ---
 
-## Data Model Strategy
+## Core Components
 
-### Lazy Loading
-Never fetch chapter content in list views.
+### Frontend (React SPA)
+- React 19 + TypeScript + Vite
+- Routes:
+  - Public reading flows (library, story view, chapter read)
+  - Writer mode flows (create story, manage chapters)
 
-### Indexing
-- Index on `storyId`
-- Index on `publishDate`
+### Backend (content-service)
+- Spring Boot 4 (Java 25)
+- Layered architecture:
+  - Controller → Service → Repository
+  - DTOs + Validation
+  - Global exception handler returning consistent JSON errors
 
-### Soft Deletes
-Records are flagged with `deletedAt` instead of being removed.
+### Database (MongoDB)
+- One `Story` per document
+- One `Chapter` per document (avoids Mongo 16MB limit for long text)
+- Indexing strategy (Phase 1):
+  - Compound index on `chapters`: `(storyId, chapterNumber)` for ordered chapter retrieval
 
 ---
 
 ## High-Level System Flow
 
-[ User Browser ]
+[ Browser (SPA) ]
        |
        v
-[ Nginx (Port 80) ]
-   ├── Serves React Static Assets
-   └── Proxies /api/* → Backend Service
+[ Nginx (prod) / Vite (dev proxy) ]
+   ├── Serves React static assets (prod)
+   └── Proxies /api/* → content-service
               |
               v
      [ Spring Boot: content-service ]
               |
               v
-        [ MongoDB Atlas ]
+           [ MongoDB ]
 
 ---
 
-## Key Principles
-- Single Entry Point (Nginx)
-- Stateless Backend
-- Service Isolation
-- Managed Data Layer
+## Public vs Admin Access Model (Phase 1)
+Phase 1 does not implement authentication yet. Instead it separates concerns by endpoint intent:
+
+### Public (Reader)
+- Only returns stories that are visible publicly
+- Only returns chapters that are `PUBLISHED`
+
+### Admin (Writer tools)
+- Writer endpoints allow viewing drafts/archived chapters
+- Story status and chapter status are managed via admin flows
+
+Note: In Phase 2, these admin endpoints will require real authentication + roles.
+
+---
+
+## Data Model Overview
+
+### Story
+Fields (simplified):
+- `id`, `title`, `authorId`, `synopsis`
+- `status`: `DRAFT | ONGOING | COMPLETED | ARCHIVED`
+- `createdAt`, `updatedAt`
+
+Public listing returns only:
+- `ONGOING`, `COMPLETED`
+
+### Chapter
+Fields:
+- `id`, `storyId`
+- `title`, `content`, `chapterNumber`
+- `status`: `DRAFT | PUBLISHED | ARCHIVED`
+- `createdAt`, `updatedAt`
+
+Rules:
+- Only `DRAFT` chapters are editable in Phase 1
+- Public read returns only `PUBLISHED`
+
+---
+
+## Key API Principles (Phase 1)
+- RESTful URIs and methods
+- Pagination for list endpoints
+- Consistent error shape for UI (see docs/devops.md for error contract)
+- Defensive validation in backend (DTO validation + service checks)
+
+---
+
+## Future Architecture (Phase 2+)
+- Introduce a separate `auth-service` microservice (reusable across future projects)
+- Enforce roles: READER / WRITER / ADMIN via JWT validation
+- Add revision-based editing for published chapters (no direct edits to `PUBLISHED`)

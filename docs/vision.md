@@ -1,39 +1,60 @@
 # Product Vision
 
 ## Mission
-Build a platform where stories are written, managed, and consumed with zero friction.
-This is not just a reader — it is an ecosystem for creators and consumers.
+Build a platform where stories are written, managed, and consumed with minimal friction.
+This is both a real product direction and a portfolio-quality system demonstrating modern full-stack + DevOps practices.
 
-## User Roles & Personas
+---
 
-### 1. The Reader
-- Instant loading
-- Distraction-free reading
-- Progress tracking
+## Core Roles
 
-### 2. The Author
-- Rich text editor
-- Chapter management
-- Analytics (views, likes)
-- Draft / publish controls
+### Reader
+Needs:
+- clean typography and fast loading
+- simple chapter navigation
+- discoverability over time (Phase 2+)
 
-### 3. The Admin
-- User management
-- Content moderation
-- System health oversight
+### Writer
+Needs:
+- easy story + chapter management
+- a draft/publish workflow that prevents mistakes
+- an editor that feels good to use
 
-## MVP vs Full Scale
+### Admin (Later)
+Needs:
+- moderation tools
+- system oversight
 
-### MVP (Current Target)
-- Public reading capability
-- Efficient data loading
-- Basic navigation
+---
 
-### V1.5 (User Layer)
-- Authentication (Login / Signup)
-- “My Library” (Bookmarks)
+## Phase 1 (Completed)
+A walking skeleton focused on:
+- public reading flows (library → story → chapter)
+- writer mode: create stories and chapters, publish/archive/restore
+- status workflows:
+  - Story: DRAFT / ONGOING / COMPLETED / ARCHIVED
+  - Chapter: DRAFT / PUBLISHED / ARCHIVED
+- strong validation + consistent API errors
+- automated deployment pipeline to Oracle VM
 
-### V2.0 (Creator Economy)
-- Author dashboard
-- Write / edit stories
-- Publish workflow
+---
+
+## Phase 2 (Next)
+Primary focus:
+1. **Authentication + roles** (implemented as a separate reusable microservice)
+2. **Revision-based chapter editing** (published chapters aren’t directly edited)
+3. **UI/UX overhaul**
+   - mobile-first reader experience
+   - tablet/desktop writer studio experience
+4. **Testing discipline**
+   - unit + integration tests
+   - CI gates
+   - move toward TDD for critical domain rules
+
+---
+
+## Product Principles
+- Readers should never see half-edited content
+- Writers should not be able to accidentally “break” published work
+- Keep APIs clean and stable; version changes deliberately
+- Ship iteratively: build → measure → improve

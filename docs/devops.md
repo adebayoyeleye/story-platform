@@ -2,51 +2,105 @@
 
 ## Philosophy
 “Deploy early, deploy often.”
-
-## Containerization
-- Frontend and backend are containerized
-- Eliminates environment drift
-
-## Orchestration
-- Docker Compose (local / dev)
-- Kubernetes or ECS (future scale)
-
-## Nginx Responsibilities
-- Reverse proxy
-- SPA routing fallback
-- API routing
-- HTTPS-ready
+Keep the system small, observable, and easy to ship as a solo builder.
 
 ---
 
-## CI/CD Pipeline
+## Environments
+
+### Dev
+- Frontend: Vite dev server
+- Backend: Spring Boot container
+- MongoDB: Docker container (optionally Atlas)
+- Compose stack for local iteration
+
+### Production
+- Deployed to Oracle Cloud VM using Docker Compose
+- Nginx as reverse proxy + static asset server
+- Images are built and pushed via GitHub Actions
+
+---
+
+## CI/CD Pipeline (Current)
 
 ### Trigger
-- Git push to `main`
+- Push to `main`
 
-### Stage 1: Build & Test
-- Frontend: npm install, test, build
-- Backend: mvn test, mvn package
+### Workflow File
+- `.github/workflows/deploy.yml`
 
-### Stage 2: Containerize
-- Build Docker images
-- Push to registry
-
-### Stage 3: Deploy
-- SSH into Oracle Cloud VM
-- Pull latest images
-- docker compose up -d
+### Stages
+1. **Build Backend**
+   - Uses Maven cache
+   - Current build command:
+     - `./mvnw clean package -DskipTests`
+2. **Build Frontend**
+   - Uses npm cache + `npm ci`
+   - `npm run build`
+3. **Build & Push Docker Images**
+   - Docker Buildx
+   - Pushes to Docker Hub:
+     - `adebayoyeleye/story-content-service:latest`
+     - `adebayoyeleye/story-frontend:latest`
+4. **Deploy to Oracle VM**
+   - SSH into VM
+   - Pull images + recreate containers
+   - Reload nginx
+   - Prune images to prevent disk fill-up
 
 ---
 
-## Observability
+## Deployment Notes
+- Current prod tags use `latest`
+  - This is fine for Phase 1
+  - Phase 2 should move to immutable tags (commit SHA) to support clean rollback.
+
+---
+
+## Observability (Phase 1)
 
 ### Logging
-- Centralized logging (ELK or file rotation)
+- Application logs via Docker logs
+- Validation errors should not spam stack traces
 
-### Monitoring
-- Spring Boot Actuator `/actuator/health`
+### Health Checks
+- Spring Boot Actuator available (where enabled)
+- Nginx can be configured for upstream health checks (Phase 2 hardening)
 
-### Alerting
-- Latency > 500ms
-- Error rate > 1%
+---
+
+## Error Contract (Important for UI)
+Backend returns consistent JSON errors via `GlobalExceptionHandler`:
+
+Example shape:
+```json
+{
+  "timestamp": "2026-01-04T00:00:00Z",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "path": "/api/v1/stories",
+  "fieldErrors": {
+    "title": "Title is required",
+    "authorId": "Author ID is required"
+  }
+}
+
+Frontend parses this into ApiError and displays:
+
+message (top-level)
+
+fieldErrors under each field
+
+Phase 2 DevOps Upgrades (Planned)
+
+Run tests in CI (remove -DskipTests)
+
+Add linting gates (frontend + backend)
+
+Add integration tests (Testcontainers Mongo)
+
+Use immutable image tags + rollback-friendly deploy
+
+Add correlation IDs across services (especially once auth-service is added)
+
