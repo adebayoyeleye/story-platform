@@ -34,8 +34,26 @@ public class StoryServiceImpl implements StoryService {
         );
     }
 
+    /**
+     * Public read: only ONGOING/COMPLETED. Otherwise pretend it doesn't exist.
+     */
     @Override
-    public Story getById(String storyId) {
+    public Story getPublicById(String storyId) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
+
+        if (story.getStatus() != StoryStatus.ONGOING && story.getStatus() != StoryStatus.COMPLETED) {
+            throw new ResourceNotFoundException("Story not found");
+        }
+
+        return story;
+    }
+
+    /**
+     * Admin read: any status allowed.
+     */
+    @Override
+    public Story getAdminById(String storyId) {
         return storyRepository.findById(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
     }
@@ -44,14 +62,14 @@ public class StoryServiceImpl implements StoryService {
     public Story updateStatus(String storyId, StoryStatus status) {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
-        
+
         StoryStatus current = story.getStatus();
 
-        boolean allowed =  
-            (current == StoryStatus.DRAFT && (status == StoryStatus.ONGOING || status == StoryStatus.ARCHIVED)) 
-            || (current == StoryStatus.ONGOING && (status == StoryStatus.COMPLETED || status == StoryStatus.ARCHIVED)) 
-            || (current == StoryStatus.COMPLETED && (status == StoryStatus.ONGOING || status == StoryStatus.ARCHIVED)) 
-            || (current == StoryStatus.ARCHIVED && status == StoryStatus.ONGOING);
+        boolean allowed =
+                (current == StoryStatus.DRAFT && (status == StoryStatus.ONGOING || status == StoryStatus.ARCHIVED))
+                        || (current == StoryStatus.ONGOING && (status == StoryStatus.COMPLETED || status == StoryStatus.ARCHIVED))
+                        || (current == StoryStatus.COMPLETED && (status == StoryStatus.ONGOING || status == StoryStatus.ARCHIVED))
+                        || (current == StoryStatus.ARCHIVED && status == StoryStatus.ONGOING);
 
         if (!allowed) {
             throw new IllegalArgumentException("Invalid story status transition: " + current + " -> " + status);

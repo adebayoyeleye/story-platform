@@ -11,7 +11,11 @@ public interface StoryService {
 
     Page<Story> getStories(Pageable pageable);
 
-    Story getById(String storyId);
+    // NEW: public-only
+    Story getPublicById(String storyId);
+
+    // NEW: admin/writer
+    Story getAdminById(String storyId);
 
     Story updateStatus(String storyId, StoryStatus status);
 
