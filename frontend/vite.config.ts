@@ -14,6 +14,11 @@ export default defineConfig({
         target: 'http://content-service:8080',  //Point to Java backend service
         changeOrigin: true,
         secure: false,
+      },
+      '/auth': { 
+        target: 'http://auth-service:8081', 
+        changeOrigin: true, 
+        secure: false 
       }
     }
   }
