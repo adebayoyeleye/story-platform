@@ -7,12 +7,28 @@ services:
       - .env  # Loads secrets like DB_PASSWORD
     environment:
       SPRING_PROFILES_ACTIVE: dev # Forces the profile for this specific file
+      # Content-service validates JWT locally using auth-service JWKS
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://auth-service:8081/.well-known/jwks.json
+      SERVER_PORT: ${CONTENT_SERVER_PORT}
+      SPRING_MONGODB_URI: ${CONTENT_MONGODB_URI}
+    depends_on:
+      - mongodb
+      - auth-service
+
+  auth-service:
+    build: ./backend/auth-service
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: ${AUTH_SERVER_PORT}
+      SPRING_MONGODB_URI: ${AUTH_MONGODB_URI}
     depends_on:
       - mongodb
 
   frontend:
-    # image: node:24-alpine # Use a real Node image instead of building the Nginx one
-    # working_dir: /app
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
@@ -22,6 +38,13 @@ services:
       - ./frontend:/app # Bind mount your code for hot-reloading
       - /app/node_modules # Anonymous volume prevents host node_modules from overwriting container ones
     command: npm run dev -- --host 0.0.0.0 # Crucial for Vite/Docker accessibility
+    environment:
+      # Your React app needs to know where to call APIs
+      VITE_CONTENT_API_BASE_URL: http://localhost:8080
+      VITE_AUTH_API_BASE_URL: http://localhost:8081
+    depends_on:
+      - content-service
+      - auth-service
 
   mongodb:
     image: mongo:latest
