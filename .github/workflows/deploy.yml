@@ -24,6 +24,10 @@ jobs:
       working-directory: backend/content-service
       run: ./mvnw clean package -DskipTests
 
+    - name: Build Auth Service
+      working-directory: backend/auth-service
+      run: ./mvnw clean package -DskipTests
+
     # ---------- Build Frontend with Caching ----------
     - name: Set up Node
       uses: actions/setup-node@v4
@@ -55,6 +59,13 @@ jobs:
         context: ./backend/content-service
         push: true
         tags: adebayoyeleye/story-content-service:latest
+
+    - name: Build & Push auth-service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend/auth-service
+        push: true
+        tags: adebayoyeleye/auth-service:latest
 
     - name: Build & Push Frontend
       uses: docker/build-push-action@v5
