@@ -1,6 +1,6 @@
 services:
   content-service:
-    image: adebayoyeleye/story-content-service:latest
+    image: adebayoyeleye/story-content-service:${CONTENT_IMAGE_TAG}
     env_file:
       - .env
     environment:
@@ -13,7 +13,7 @@ services:
       - auth-service
 
   auth-service:
-    image: adebayoyeleye/auth-service:latest
+    image: adebayoyeleye/auth-service:${AUTH_IMAGE_TAG}
     env_file:
       - .env
     environment:
@@ -23,7 +23,7 @@ services:
     restart: always
 
   frontend:
-    image: adebayoyeleye/story-frontend:latest
+    image: adebayoyeleye/story-frontend:${FRONTEND_IMAGE_TAG}
     restart: always
 
   nginx:
