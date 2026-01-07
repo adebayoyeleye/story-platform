@@ -4,9 +4,8 @@ server:
 spring:
   application:
     name: auth-service
-  data:
-    mongodb:
-      uri: ${SPRING_MONGODB_URI:mongodb://admin:password123@localhost:27017/authdb?authSource=admin}
+  mongodb:
+    uri: ${SPRING_MONGODB_URI:mongodb://admin:password123@localhost:27017/authdb?authSource=admin}
 
 management:
   endpoints:
