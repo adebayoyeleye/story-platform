@@ -7,6 +7,12 @@ spring:
   mongodb:
     uri: ${SPRING_MONGODB_URI:mongodb://admin:password123@localhost:27017/authdb?authSource=admin}
 
+jwt:
+  issuer: ${JWT_ISSUER:audax-auth}
+  key-id: ${JWT_KEY_ID:dev-key-1}
+  private-key-b64: ${JWT_PRIVATE_KEY_B64}
+  public-key-b64: ${JWT_PUBLIC_KEY_B64}
+
 management:
   endpoints:
     web:

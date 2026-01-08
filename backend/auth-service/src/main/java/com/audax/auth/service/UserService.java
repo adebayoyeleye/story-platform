@@ -19,25 +19,20 @@ public class UserService {
     }
 
     public User signup(String email, String rawPassword) {
-        repo.findByEmail(email).ifPresent(u -> {
-            throw new IllegalArgumentException("Email already exists");
-        });
+        repo.findByEmail(email).ifPresent(u -> { throw new IllegalArgumentException("Email already exists"); });
 
-        User user = new User();
-        user.setEmail(email);
-        user.setPasswordHash(encoder.encode(rawPassword));
-        user.setRoles(List.of("WRITER"));
-
-        return repo.save(user);
+        User u = new User();
+        u.setEmail(email);
+        u.setPasswordHash(encoder.encode(rawPassword));
+        u.setRoles(List.of("ROLE_USER"));
+        return repo.save(u);
     }
 
-    public User authenticate(String email, String rawPassword) {
-        User user = repo.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
-
-        if (!encoder.matches(rawPassword, user.getPasswordHash())) {
+    public User verifyLogin(String email, String rawPassword) {
+        User u = repo.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
+        if (!encoder.matches(rawPassword, u.getPasswordHash())) {
             throw new IllegalArgumentException("Invalid credentials");
         }
-        return user;
+        return u;
     }
 }
