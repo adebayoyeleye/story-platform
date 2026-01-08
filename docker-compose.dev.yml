@@ -38,10 +38,10 @@ services:
       - ./frontend:/app # Bind mount your code for hot-reloading
       - /app/node_modules # Anonymous volume prevents host node_modules from overwriting container ones
     command: npm run dev -- --host 0.0.0.0 # Crucial for Vite/Docker accessibility
-    environment:
-      # Your React app needs to know where to call APIs
-      VITE_CONTENT_API_BASE_URL: http://localhost:8080
-      VITE_AUTH_API_BASE_URL: http://localhost:8081
+    # environment:
+    #   # Your React app needs to know where to call APIs
+    #   VITE_CONTENT_API_BASE_URL: http://localhost:8080
+    #   VITE_AUTH_API_BASE_URL: http://localhost:8081
     depends_on:
       - content-service
       - auth-service
