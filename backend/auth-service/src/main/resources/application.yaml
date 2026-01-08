@@ -13,8 +13,19 @@ jwt:
   private-key-b64: ${JWT_PRIVATE_KEY_B64}
   public-key-b64: ${JWT_PUBLIC_KEY_B64}
 
+# Spring Boot Actuator Configuration
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+# Add custom info here
+info:
+  app:
+    name: Auth Service
+    description: Authentication Service for Signup, Login, and User Management
+    version: 1.0.0      
