@@ -19,7 +19,9 @@ public class SecurityConfig {
                 .requestMatchers(
                         "/api/auth/**",
                         "/.well-known/jwks.json",
-                        "/actuator/health"
+                        "/actuator/health",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**"
                 ).permitAll()
                 .anyRequest().authenticated()
         );

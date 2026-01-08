@@ -3,6 +3,7 @@ package com.audax.auth.config;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -38,39 +40,40 @@ public class JwtKeyConfig {
 
     @Bean
     public JwtEncoder jwtEncoder(RSAKey rsaKey) {
-        var jwkSet = new JWKSet(rsaKey);
-        var jwkSource = new ImmutableJWKSet<SecurityContext>(jwkSet);
+        JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(rsaKey));
         return new NimbusJwtEncoder(jwkSource);
     }
 
-    private RSAPrivateKey parsePrivateKey(String b64Pem) {
+    private RSAPrivateKey parsePrivateKey(String b64) {
         try {
-            String pem = new String(Base64.getDecoder().decode(b64Pem));
-            String cleaned = pem
-                    .replace("-----BEGIN PRIVATE KEY-----", "")
-                    .replace("-----END PRIVATE KEY-----", "")
-                    .replaceAll("\\s+", "");
-            byte[] der = Base64.getDecoder().decode(cleaned);
-            PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(der);
-            return (RSAPrivateKey) KeyFactory.getInstance("RSA").generatePrivate(spec);
+            byte[] der = decodePem(b64, "PRIVATE KEY");
+            return (RSAPrivateKey) KeyFactory.getInstance("RSA")
+                    .generatePrivate(new PKCS8EncodedKeySpec(der));
         } catch (Exception e) {
-            throw new IllegalStateException("Invalid JWT_PRIVATE_KEY_B64 (must be base64 of PEM)", e);
+            throw new IllegalArgumentException("Invalid JWT_PRIVATE_KEY_B64: ensure it is a base64-encoded PKCS#8 PEM", e);
         }
     }
 
-    private RSAPublicKey parsePublicKey(String b64Pem) {
+    private RSAPublicKey parsePublicKey(String b64) {
         try {
-            String pem = new String(Base64.getDecoder().decode(b64Pem));
-            String cleaned = pem
-                    .replace("-----BEGIN PUBLIC KEY-----", "")
-                    .replace("-----END PUBLIC KEY-----", "")
-                    .replaceAll("\\s+", "");
-            byte[] der = Base64.getDecoder().decode(cleaned);
-            X509EncodedKeySpec spec = new X509EncodedKeySpec(der);
-            return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(spec);
+            byte[] der = decodePem(b64, "PUBLIC KEY");
+            return (RSAPublicKey) KeyFactory.getInstance("RSA")
+                    .generatePublic(new X509EncodedKeySpec(der));
         } catch (Exception e) {
-            throw new IllegalStateException("Invalid JWT_PUBLIC_KEY_B64 (must be base64 of PEM)", e);
+            throw new IllegalArgumentException("Invalid JWT_PUBLIC_KEY_B64: ensure it is a base64-encoded X.509 PEM", e);
         }
+    }
+
+    /**
+     * Optimized helper to strip PEM headers and decode Base64 in one pass.
+     */
+    private byte[] decodePem(String b64, String type) {
+        String pem = new String(Base64.getDecoder().decode(b64), StandardCharsets.UTF_8);
+        String content = pem
+                .replace("-----BEGIN " + type + "-----", "")
+                .replace("-----END " + type + "-----", "")
+                .replaceAll("\\s+", "");
+        return Base64.getDecoder().decode(content);
     }
 
     private boolean isBlank(String s) {
