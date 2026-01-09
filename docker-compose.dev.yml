@@ -8,7 +8,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: dev # Forces the profile for this specific file
       # Content-service validates JWT locally using auth-service JWKS
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://auth-service:8081/.well-known/jwks.json
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://auth-service:8081/api/v1/auth/.well-known/jwks.json
       SERVER_PORT: ${CONTENT_SERVER_PORT}
       SPRING_MONGODB_URI: ${CONTENT_MONGODB_URI}
     depends_on:
