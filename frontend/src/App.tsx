@@ -4,6 +4,7 @@ import StoryDetail from './pages/StoryDetail';
 import ChapterRead from './pages/ChapterRead';
 import WriterHome from './pages/WriterHome';
 import WriterStory from './pages/WriterStory';
+import AuthPage from './pages/Auth';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/chapters/:chapterId" element={<ChapterRead />} />
         <Route path="/write" element={<WriterHome />} />
         <Route path="/write/story/:storyId" element={<WriterStory />} />
+        <Route path="/auth" element={<AuthPage />} />
       </Routes>
     </BrowserRouter>
   )
