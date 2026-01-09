@@ -17,7 +17,7 @@ export default function ChapterRead() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiGet<Chapter>(`/api/v1/chapters/${chapterId}`);
+      const data = await apiGet<Chapter>(`/api/v1/content/chapters/${chapterId}`);
       if (cancelled) return;
       setChapter(data);
     } catch (e: unknown) {

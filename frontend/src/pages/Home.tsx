@@ -18,7 +18,7 @@ export default function Home() {
       setError(null);
 
       try {
-        const data = await apiGet<any>(`/api/v1/stories?page=${page}&size=10`);
+        const data = await apiGet<any>(`/api/v1/content/stories?page=${page}&size=10`);
         if (cancelled) return;
 
         setStories(data.content ?? []);

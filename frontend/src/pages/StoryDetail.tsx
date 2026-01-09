@@ -21,8 +21,8 @@ export default function StoryDetail() {
     setError(null);
 
     try {
-      const storyData = await apiGet<StorySummary>(`/api/v1/stories/${id}`);
-      const chaptersData = await apiGet<any>(`/api/v1/stories/${id}/chapters?page=${chapterPage}&size=50`);
+      const storyData = await apiGet<StorySummary>(`/api/v1/content/stories/${id}`);
+      const chaptersData = await apiGet<any>(`/api/v1/content/stories/${id}/chapters?page=${chapterPage}&size=50`);
       if (cancelled) return;
 
       setStory(storyData);

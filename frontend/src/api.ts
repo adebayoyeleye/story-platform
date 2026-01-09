@@ -43,7 +43,7 @@ async function request<T>(url: string, opts: RequestOpts, retry = true): Promise
   const headers: Record<string, string> = { ...(opts.headers ?? {}) };
 
   // Attach Bearer only for content-service calls
-  if (url.startsWith('/api/')) {
+  if (url.startsWith('/api/v1/content/')) {
     const token = getAccessToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
   }

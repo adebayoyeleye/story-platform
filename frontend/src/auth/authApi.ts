@@ -14,7 +14,7 @@ export async function signup(payload: {
   appId: string;
   roles: string[];
 }): Promise<AuthResponse> {
-  const res = await fetch('/auth/api/auth/signup', {
+  const res = await fetch('/api/v1/auth/signup', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -31,7 +31,7 @@ export async function login(payload: {
   password: string;
   appId: string;
 }): Promise<AuthResponse> {
-  const res = await fetch('/auth/api/auth/login', {
+  const res = await fetch('/api/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -48,7 +48,7 @@ export async function refresh(): Promise<AuthResponse> {
   const rt = getRefreshToken();
   if (!rt) throw new Error('Missing refresh token');
 
-  const res = await fetch('/auth/api/auth/refresh', {
+  const res = await fetch('/api/v1/auth/refresh', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ refreshToken: rt }),

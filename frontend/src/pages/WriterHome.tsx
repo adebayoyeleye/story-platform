@@ -24,7 +24,7 @@ export default function WriterHome() {
 
     try {
       const page = await apiGet<{ content?: StorySummary[] }>(
-        `/api/v1/stories/admin?authorId=${encodeURIComponent(authorId)}&page=0&size=50`
+        `/api/v1/content/stories/admin?authorId=${encodeURIComponent(authorId)}&page=0&size=50`
       );
       setMyStories(page.content ?? []);
     } catch (err: unknown) {
@@ -40,7 +40,7 @@ export default function WriterHome() {
     setFieldErrors({});
 
     try {
-      const story = await apiPost<StorySummary>('/api/v1/stories', { title, authorId, synopsis });
+      const story = await apiPost<StorySummary>('/api/v1/content/stories', { title, authorId, synopsis });
       nav(`/write/story/${story.id}`);
       await loadMyStories();
     } catch (err: unknown) {
