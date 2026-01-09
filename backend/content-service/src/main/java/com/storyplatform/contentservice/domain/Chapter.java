@@ -53,6 +53,8 @@ public class Chapter {
     public String getContent() { return content; }
     public int getChapterNumber() { return chapterNumber; }
     public ChapterStatus getStatus() { return status; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
 
     // controlled mutations
     public void setChapterNumber(int chapterNumber) {
