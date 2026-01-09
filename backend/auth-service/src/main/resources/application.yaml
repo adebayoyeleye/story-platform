@@ -10,8 +10,10 @@ spring:
 jwt:
   issuer: ${JWT_ISSUER:audax-auth}
   key-id: ${JWT_KEY_ID:dev-key-1}
-  private-key-b64: ${JWT_PRIVATE_KEY_B64}
-  public-key-b64: ${JWT_PUBLIC_KEY_B64}
+  private-key-b64: ${JWT_PRIVATE_KEY_B64:}
+  public-key-b64: ${JWT_PUBLIC_KEY_B64:}
+  access-token-ttl: ${JWT_ACCESS_TTL:PT2H}
+  refresh-token-ttl: ${JWT_REFRESH_TTL:P14D}
 
 # Spring Boot Actuator Configuration
 management:

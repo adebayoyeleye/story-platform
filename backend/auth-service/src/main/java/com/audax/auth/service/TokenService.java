@@ -6,7 +6,7 @@ import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 @Service
 public class TokenService {
@@ -19,23 +19,36 @@ public class TokenService {
         this.props = props;
     }
 
-    public String mint(User user) {
+    public record MintedAccessToken(String token, long expiresInSeconds) {}
+
+    public MintedAccessToken mintAccess(User user, String appId) {
         Instant now = Instant.now();
-        Instant exp = now.plus(2, ChronoUnit.HOURS);
+        Instant exp = now.plus(props.accessTokenTtl());
+
+        List<String> appRoles =
+                user.getRolesByApp() == null ? List.of() :
+                        user.getRolesByApp().getOrDefault(appId, List.of());
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(props.issuer())
                 .issuedAt(now)
                 .expiresAt(exp)
                 .subject(user.getId())
+                .audience(List.of(appId))             // prevents role leakage across apps
                 .claim("email", user.getEmail())
-                .claim("roles", user.getRoles())
+                .claim("roles", appRoles)             // only roles for THIS app
                 .build();
 
         JwsHeader headers = JwsHeader.with(() -> "RS256")
                 .keyId(props.keyId())
                 .build();
 
-        return encoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
+        String token = encoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
+        long expiresInSeconds = props.accessTokenTtl().toSeconds();
+        return new MintedAccessToken(token, expiresInSeconds);
+    }
+
+    public String issuer() {
+        return props.issuer();
     }
 }
