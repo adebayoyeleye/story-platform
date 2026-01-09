@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { StorySummary } from '../types';
+import { apiGet } from '../api';
 
 export default function Home() {
   const [stories, setStories] = useState<StorySummary[]>([]);
@@ -10,20 +11,38 @@ export default function Home() {
   const [hasNext, setHasNext] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    let cancelled = false;
 
-    fetch(`/api/v1/stories?page=${page}&size=10`)
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`Failed to load stories (${res.status})`);
-        return res.json();
-      })
-      .then((data) => {
+    async function load() {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const data = await apiGet<any>(`/api/v1/stories?page=${page}&size=10`);
+        if (cancelled) return;
+
         setStories(data.content ?? []);
-        setHasNext(Boolean(data?.page?.totalPages ? page + 1 < data.page.totalPages : data?.totalPages ? page + 1 < data.totalPages : data?.last === false));
-      })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load stories'))
-      .finally(() => setLoading(false));
+        setHasNext(Boolean(
+          data?.page?.totalPages
+            ? page + 1 < data.page.totalPages
+            : data?.totalPages
+              ? page + 1 < data.totalPages
+              : data?.last === false
+        ));
+      } catch (err: unknown) {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : 'Failed to load stories');
+      } finally {
+        if (cancelled) return;
+        setLoading(false);
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+    };
   }, [page]);
 
   if (loading) return <div className="p-5 max-w-4xl mx-auto">Loading stories...</div>;
@@ -35,8 +54,8 @@ export default function Home() {
         <h1 className="text-3xl font-bold">Library 📚</h1>
         <Link to="/write" className="text-blue-600 hover:underline">Writer Mode</Link>
       </div>
-      <div className="grid gap-4">
 
+      <div className="grid gap-4">
         <div className="flex gap-3 mt-6">
           <button
             className="border px-3 py-2 rounded disabled:opacity-50"

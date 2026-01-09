@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import type { Chapter } from '../types';
+import { apiGet } from '../api';
 
 export default function ChapterRead() {
   const { chapterId } = useParams();
@@ -9,21 +10,28 @@ export default function ChapterRead() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!chapterId) return;
+  if (!chapterId) return;
+  let cancelled = false;
 
+  async function load() {
     setLoading(true);
     setError(null);
+    try {
+      const data = await apiGet<Chapter>(`/api/v1/chapters/${chapterId}`);
+      if (cancelled) return;
+      setChapter(data);
+    } catch (e: unknown) {
+      if (cancelled) return;
+      setError(e instanceof Error ? e.message : 'Failed to load chapter');
+    } finally {
+      if (cancelled) return;
+      setLoading(false);
+    }
+  }
 
-    fetch(`/api/v1/chapters/${chapterId}`)
-      .then(async (res) => {
-        if (res.status === 404) throw new Error('Chapter not found (maybe not published yet)');
-        if (!res.ok) throw new Error(`Failed to load chapter (${res.status})`);
-        return res.json();
-      })
-      .then(setChapter)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load chapter'))
-      .finally(() => setLoading(false));
-  }, [chapterId]);
+  load();
+  return () => { cancelled = true; };
+}, [chapterId]);
 
   if (loading) return <div className="p-5 max-w-3xl mx-auto">Loading chapter...</div>;
   if (error) return <div className="p-5 max-w-3xl mx-auto text-red-600">{error}</div>;
