@@ -16,7 +16,7 @@ public class JwksController {
         this.rsaKey = rsaKey;
     }
 
-    @GetMapping("/.well-known/jwks.json")
+    @GetMapping("/api/v1/auth/.well-known/jwks.json")
     public Map<String, Object> jwks() {
         // Only expose PUBLIC part
         return new JWKSet(rsaKey.toPublicJWK()).toJSONObject();
