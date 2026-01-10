@@ -192,7 +192,7 @@ export default function WriterStory() {
         {/* Left: chapter list */}
         <div className="border rounded p-4">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-xl font-semibold">Chapters (Admin)</h2>
+            <h2 className="text-xl font-semibold">Chapters (Writer)</h2>
             <button className="border px-3 py-2 rounded" onClick={createDraftChapter}>
               + New Chapter
             </button>
