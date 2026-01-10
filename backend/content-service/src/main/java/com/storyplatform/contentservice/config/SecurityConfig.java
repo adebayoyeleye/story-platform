@@ -24,10 +24,13 @@ public class SecurityConfig {
 
     http.authorizeHttpRequests(auth -> auth
         // public endpoints
-        .requestMatchers("/api/v1/stories/**", "/api/v1/chapters/**").permitAll()
+        .requestMatchers(
+          "/api/v1/content/stories/**",
+          "/api/v1/content/chapters/**"
+        ).permitAll()
 
         // protected endpoints
-        .requestMatchers("/api/v1/admin/**").authenticated()
+        .requestMatchers("/api/v1/content/admin/**").authenticated()    
 
         .anyRequest().permitAll()
     );

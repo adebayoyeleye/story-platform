@@ -18,7 +18,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/v1/stories")
+@RequestMapping("/api/v1/content/stories")
 @Validated
 public class StoryController {
 
