@@ -23,16 +23,29 @@ public class SecurityConfig {
     http.csrf(csrf -> csrf.disable());
 
     http.authorizeHttpRequests(auth -> auth
-        // public endpoints
+        // Public reader endpoints (still permitAll for Phase 2)
         .requestMatchers(
-          "/api/v1/content/stories/**",
-          "/api/v1/content/chapters/**"
+            "/api/v1/content/stories/**",
+            "/api/v1/content/chapters/**",
+            "/api/v1/content/stories/*/chapters/**"
         ).permitAll()
 
-        // protected endpoints
-        .requestMatchers("/api/v1/content/admin/**").authenticated()    
+        // Writer capability endpoints
+        .requestMatchers("/api/v1/content/**/writer/**", "/api/v1/content/writer/**").hasAuthority("ROLE_WRITER")
 
-        .anyRequest().permitAll()
+        // Future platform admin surface (reserved)
+        .requestMatchers("/api/v1/content/admin/**").hasAuthority("ROLE_ADMIN")
+
+        // Swagger / actuator (keep readable in prod or lock down later)
+        .requestMatchers(
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/actuator/health",
+            "/actuator/info"
+        ).permitAll()
+
+        .anyRequest().authenticated()
     );
 
     http.oauth2ResourceServer(oauth2 -> oauth2

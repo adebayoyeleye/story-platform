@@ -5,9 +5,7 @@ import com.storyplatform.contentservice.domain.StoryStatus;
 import com.storyplatform.contentservice.dto.StoryRequestDto;
 import com.storyplatform.contentservice.dto.StoryResponseDto;
 import com.storyplatform.contentservice.service.StoryService;
-
 import jakarta.validation.Valid;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -18,7 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/content/stories")
+@RequestMapping("/api/v1/content")
 @Validated
 public class StoryController {
 
@@ -28,27 +26,14 @@ public class StoryController {
         this.storyService = storyService;
     }
 
-    @PostMapping
-    public ResponseEntity<StoryResponseDto> create(
-            @Valid @RequestBody StoryRequestDto request
-    ) {
-        Story story = new Story(
-                request.title(),
-                request.authorId(),
-                request.synopsis()
-        );
-
-        Story saved = storyService.create(story);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(toResponse(saved));
-    }
+    // =========================
+    // PUBLIC (Reader) endpoints
+    // =========================
 
     /**
-     * Public library listing: only ONGOING/COMPLETED (already enforced in service)
+     * Public library listing: only ONGOING/COMPLETED (enforced in service)
      */
-    @GetMapping
+    @GetMapping("/stories")
     public ResponseEntity<Page<StoryResponseDto>> getStories(
             @PageableDefault(
                     size = 10,
@@ -57,52 +42,69 @@ public class StoryController {
             ) Pageable pageable
     ) {
         Page<StoryResponseDto> result =
-                storyService.getStories(pageable)
-                        .map(this::toResponse);
+                storyService.getStories(pageable).map(this::toResponse);
 
         return ResponseEntity.ok(result);
     }
 
     /**
-     * Public story read: only ONGOING/COMPLETED; otherwise return 404
+     * Public story read: only ONGOING/COMPLETED; otherwise 404
      */
-    @GetMapping("/{storyId}")
+    @GetMapping("/stories/{storyId}")
     public ResponseEntity<StoryResponseDto> getById(@PathVariable String storyId) {
         Story story = storyService.getPublicById(storyId);
         return ResponseEntity.ok(toResponse(story));
     }
 
+    // =========================
+    // WRITER endpoints
+    // =========================
+    // NOTE: These are capability endpoints.
+    // Authorization = role (WRITER) + ownership checks in Phase 3 (service layer).
+    // For Phase 2, we enforce role in SecurityConfig and keep behavior consistent.
+
+    @PostMapping("/writer/stories")
+    public ResponseEntity<StoryResponseDto> create(
+            @Valid @RequestBody StoryRequestDto request
+    ) {
+        Story story = new Story(request.title(), request.authorId(), request.synopsis());
+        Story saved = storyService.create(story);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
+    }
+
     /**
-     * Writer/Admin story read: can load DRAFT/ARCHIVED too
+     * Writer can load DRAFT/ARCHIVED too (no "admin" naming)
      */
-    @GetMapping("/admin/{storyId}")
-    public ResponseEntity<StoryResponseDto> getByIdAdmin(@PathVariable String storyId) {
-        Story story = storyService.getAdminById(storyId);
+    @GetMapping("/writer/stories/{storyId}")
+    public ResponseEntity<StoryResponseDto> getByIdWriter(@PathVariable String storyId) {
+        Story story = storyService.getAdminById(storyId); // rename later if you want: getWriterById(...)
         return ResponseEntity.ok(toResponse(story));
     }
 
-    @PatchMapping("/{storyId}/status")
-    public ResponseEntity<StoryResponseDto> updateStatus(
+    /**
+     * Writer listing by authorId (Phase 2 keeps this; Phase 3 should derive authorId from token)
+     */
+    @GetMapping("/writer/stories")
+    public ResponseEntity<Page<StoryResponseDto>> getStoriesByAuthorWriter(
+            @RequestParam String authorId,
+            Pageable pageable
+    ) {
+        Page<StoryResponseDto> result =
+                storyService.getStoriesByAuthor(authorId, pageable).map(this::toResponse);
+
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Writer updates story status (DRAFT->ONGOING->COMPLETED->ARCHIVED)
+     */
+    @PatchMapping("/writer/stories/{storyId}/status")
+    public ResponseEntity<StoryResponseDto> updateStatusWriter(
             @PathVariable String storyId,
             @RequestParam StoryStatus status
     ) {
         Story updated = storyService.updateStatus(storyId, status);
         return ResponseEntity.ok(toResponse(updated));
-    }
-
-    /**
-     * Writer/Admin listing by authorId (your current endpoint)
-     */
-    @GetMapping("/admin")
-    public ResponseEntity<Page<StoryResponseDto>> getStoriesByAuthor(
-            @RequestParam String authorId,
-            Pageable pageable
-    ) {
-        Page<StoryResponseDto> result =
-                storyService.getStoriesByAuthor(authorId, pageable)
-                        .map(this::toResponse);
-
-        return ResponseEntity.ok(result);
     }
 
     private StoryResponseDto toResponse(Story story) {
