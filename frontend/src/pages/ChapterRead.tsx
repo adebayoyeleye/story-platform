@@ -13,7 +13,7 @@ export default function ChapterRead() {
   if (!chapterId) return;
   let cancelled = false;
 
-  async function load() {
+  (async () => {
     setLoading(true);
     setError(null);
     try {
@@ -27,9 +27,8 @@ export default function ChapterRead() {
       if (cancelled) return;
       setLoading(false);
     }
-  }
+  })();
 
-  load();
   return () => { cancelled = true; };
 }, [chapterId]);
 

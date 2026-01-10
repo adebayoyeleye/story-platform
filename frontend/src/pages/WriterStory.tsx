@@ -32,8 +32,8 @@ export default function WriterStory() {
     setFieldErrors({});
     try {
       const [s, list] = await Promise.all([
-        apiGet<StorySummary>(`/api/v1/content/stories/admin/${storyId}`),
-        apiGet<any>(`/api/v1/content/admin/stories/${storyId}/chapters?page=0&size=200`)
+        apiGet<StorySummary>(`/api/v1/content/writer/stories/${storyId}`),
+        apiGet<any>(`/api/v1/content/writer/stories/${storyId}/chapters?page=0&size=200`)
       ]);
       setStory(s);
       setChapters(list.content ?? []);
@@ -51,7 +51,7 @@ export default function WriterStory() {
     setError(null);
     setFieldErrors({});
     try {
-      await apiPost(`/api/v1/content/stories/${storyId}/chapters`, {
+      await apiPost(`/api/v1/content/writer/stories/${storyId}/chapters`, {
         title: `Chapter ${nextChapterNumber}`,
         content: '',
         chapterNumber: nextChapterNumber
@@ -71,7 +71,7 @@ export default function WriterStory() {
     setError(null);
     setFieldErrors({});
     try {
-      const full = await apiGet<Chapter>(`/api/v1/content/admin/chapters/${chapterId}`);
+      const full = await apiGet<Chapter>(`/api/v1/content/writer/chapters/${chapterId}`);
       setSelectedChapter(full);
       setNewTitle(full.title);
       setNewContent(full.content);
@@ -85,7 +85,7 @@ export default function WriterStory() {
     setError(null);
     setFieldErrors({});
     try {
-      const updated = await apiPut<Chapter>(`/api/v1/content/admin/chapters/${selectedChapter.id}`, {
+      const updated = await apiPut<Chapter>(`/api/v1/content/writer/chapters/${selectedChapter.id}`, {
         title: newTitle,
         content: newContent
       });
@@ -105,7 +105,7 @@ export default function WriterStory() {
     setError(null);
     setFieldErrors({});
     try {
-      await apiPatchNoContent(`/api/v1/content/chapters/${chapterId}/status?status=${status}`);
+      await apiPatchNoContent(`/api/v1/content/writer/chapters/${chapterId}/status?status=${status}`);
       await refresh();
       if (selectedChapter?.id === chapterId) setSelectedChapter(null);
     } catch (err: unknown) {
@@ -136,7 +136,7 @@ export default function WriterStory() {
     setFieldErrors({});
     try {
       const patched = await apiPatchJson<StorySummary>(
-        `/api/v1/content/stories/${storyId}/status?status=${encodeURIComponent(next)}`
+        `/api/v1/content/writer/stories/${storyId}/status?status=${encodeURIComponent(next)}`
       );
       setStory(patched);
     } catch (err: unknown) {

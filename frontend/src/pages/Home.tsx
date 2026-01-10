@@ -13,7 +13,7 @@ export default function Home() {
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
+    (async () => {
       setLoading(true);
       setError(null);
 
@@ -22,27 +22,24 @@ export default function Home() {
         if (cancelled) return;
 
         setStories(data.content ?? []);
-        setHasNext(Boolean(
-          data?.page?.totalPages
-            ? page + 1 < data.page.totalPages
-            : data?.totalPages
-              ? page + 1 < data.totalPages
-              : data?.last === false
-        ));
+
+        const totalPages =
+          data?.page?.totalPages ?? data?.totalPages ?? (data?.page?.totalElements ? 1 : undefined);
+
+        if (typeof totalPages === 'number') {
+          setHasNext(page + 1 < totalPages);
+        } else {
+          setHasNext(data?.last === false);
+        }
       } catch (err: unknown) {
         if (cancelled) return;
         setError(err instanceof Error ? err.message : 'Failed to load stories');
       } finally {
-        if (cancelled) return;
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    }
+    })();
 
-    load();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [page]);
 
   if (loading) return <div className="p-5 max-w-4xl mx-auto">Loading stories...</div>;

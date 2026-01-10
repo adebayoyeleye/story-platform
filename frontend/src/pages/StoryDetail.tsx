@@ -16,7 +16,7 @@ export default function StoryDetail() {
   if (!id) return;
   let cancelled = false;
 
-  async function load() {
+  (async() => {
     setLoading(true);
     setError(null);
 
@@ -35,9 +35,8 @@ export default function StoryDetail() {
       if (cancelled) return;
       setLoading(false);
     }
-  }
+  })();
 
-  load();
   return () => { cancelled = true; };
 }, [id, chapterPage]);
 
