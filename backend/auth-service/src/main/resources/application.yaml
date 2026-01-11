@@ -1,0 +1,33 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: auth-service
+  mongodb:
+    uri: ${SPRING_MONGODB_URI:mongodb://admin:password123@localhost:27017/authdb?authSource=admin}
+
+jwt:
+  issuer: ${JWT_ISSUER:audax-auth}
+  key-id: ${JWT_KEY_ID:dev-key-1}
+  private-key-b64: ${JWT_PRIVATE_KEY_B64:}
+  public-key-b64: ${JWT_PUBLIC_KEY_B64:}
+  access-token-ttl: ${JWT_ACCESS_TTL:PT2H}
+  refresh-token-ttl: ${JWT_REFRESH_TTL:P14D}
+
+# Spring Boot Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+  endpoint:
+    health:
+      show-details: always
+
+# Add custom info here
+info:
+  app:
+    name: Auth Service
+    description: Authentication Service for Signup, Login, and User Management
+    version: 1.0.0      

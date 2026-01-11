@@ -4,12 +4,14 @@ spring:
   data:
     mongodb:
       uri: ${SPRING_MONGODB_URI:mongodb://admin:password123@localhost:27017/storydb?authSource=admin}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI}
 
 server:
   port: ${SERVER_PORT:8080}
-  # This tells Spring Boot: "Everything starts with /api"
-  servlet:
-    context-path: /api  
 
 # Spring Boot Actuator Configuration
 management:

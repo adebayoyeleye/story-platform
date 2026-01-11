@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import type { StorySummary, ChapterSummary } from '../types';
+import { apiGet } from '../api';
 
 export default function StoryDetail() {
   const { id } = useParams(); // Get the ID from the URL
@@ -12,30 +13,32 @@ export default function StoryDetail() {
   const [chaptersHasNext, setChaptersHasNext] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+  if (!id) return;
+  let cancelled = false;
 
+  (async() => {
     setLoading(true);
     setError(null);
 
-    Promise.all([
-      fetch(`/api/v1/stories/${id}`).then(async (res) => {
-        if (res.status === 404) throw new Error('Story not found');
-        if (!res.ok) throw new Error(`Failed to load story (${res.status})`);
-        return res.json();
-      }),
-      fetch(`/api/v1/stories/${id}/chapters?page=${chapterPage}&size=50`).then(async (res) => {
-        if (!res.ok) throw new Error(`Failed to load chapters (${res.status})`);
-        return res.json();
-      }),
-    ])
-      .then(([storyData, chaptersData]) => {
-        setStory(storyData);
-        setChapters(chaptersData.content ?? []);
-        setChaptersHasNext(chaptersData?.last === false);
-      })
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Failed to load story'))
-      .finally(() => setLoading(false));
-  }, [id, chapterPage]);
+    try {
+      const storyData = await apiGet<StorySummary>(`/api/v1/content/stories/${id}`);
+      const chaptersData = await apiGet<any>(`/api/v1/content/stories/${id}/chapters?page=${chapterPage}&size=50`);
+      if (cancelled) return;
+
+      setStory(storyData);
+      setChapters(chaptersData.content ?? []);
+      setChaptersHasNext(chaptersData?.last === false);
+    } catch (e: unknown) {
+      if (cancelled) return;
+      setError(e instanceof Error ? e.message : 'Failed to load story');
+    } finally {
+      if (cancelled) return;
+      setLoading(false);
+    }
+  })();
+
+  return () => { cancelled = true; };
+}, [id, chapterPage]);
 
   if (loading) return <div className="p-5 max-w-4xl mx-auto">Loading story...</div>;
   if (error) return <div className="p-5 max-w-4xl mx-auto text-red-600">{error}</div>;

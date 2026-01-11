@@ -35,6 +35,8 @@ public class Story {
     public String getAuthorId() { return authorId; }
     public String getSynopsis() { return synopsis; }
     public StoryStatus getStatus() { return status; }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
 
     // controlled mutations
     public void setStatus(StoryStatus status) {
