@@ -6,6 +6,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 
 @Configuration
 public class SecurityConfig {
@@ -28,6 +29,11 @@ public class SecurityConfig {
         http.sessionManagement(sm -> sm.sessionCreationPolicy(
                 org.springframework.security.config.http.SessionCreationPolicy.STATELESS
         ));
+
+        // ✅ add these
+        http.httpBasic(AbstractHttpConfigurer::disable);
+        http.formLogin(AbstractHttpConfigurer::disable);
+        http.logout(AbstractHttpConfigurer::disable);
 
         return http.build();
     }
