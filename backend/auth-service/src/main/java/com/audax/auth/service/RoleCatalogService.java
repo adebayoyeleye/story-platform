@@ -1,28 +1,35 @@
 package com.audax.auth.service;
 
-import com.audax.auth.repository.RoleDefinitionRepository;
+import com.audax.auth.repository.RoleCatalogRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class RoleCatalogService {
 
-    private final RoleDefinitionRepository roles;
+    private final RoleCatalogRepository repo;
 
-    public RoleCatalogService(RoleDefinitionRepository roles) {
-        this.roles = roles;
+    public RoleCatalogService(RoleCatalogRepository repo) {
+        this.repo = repo;
     }
 
-    public void assertRolesExist(String appId, List<String> requestedRoles) {
-        // fast path: build set of allowed role names for appId
-        Set<String> allowed = new HashSet<>(roles.findByAppId(appId).stream().map(r -> r.getName()).toList());
+    public void assertRolesExist(String appId, List<String> roles) {
+        if (roles == null || roles.isEmpty()) return;
 
-        for (String r : requestedRoles) {
-            if (!allowed.contains(r)) {
-                throw new IllegalArgumentException("Unknown/invalid role for appId=" + appId + ": " + r);
+        var catalog = repo.findByAppId(appId)
+                .orElseThrow(() -> new IllegalArgumentException("No role catalog found for appId=" + appId));
+
+        Set<String> allowed = catalog.getRoles() == null ? Set.of() :
+                catalog.getRoles().stream()
+                        .map(r -> r.getCode())
+                        .collect(Collectors.toSet());
+
+        for (String role : roles) {
+            if (!allowed.contains(role)) {
+                throw new IllegalArgumentException("Unknown/invalid role for appId=" + appId + ": " + role);
             }
         }
     }

@@ -11,8 +11,8 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
 
   // Phase 2 decision
-  const [appId, setAppId] = useState('storyapp');
-  const [roles, setRoles] = useState('WRITER'); // comma-separated for signup
+  const appId = "storyapp";
+  const roles = "WRITER"; // comma-separated for signup
 
   const [error, setError] = useState<string | null>(null);
 
@@ -62,23 +62,6 @@ export default function AuthPage() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-
-        <input
-          className="border p-2 rounded"
-          placeholder="appId (e.g. storyapp)"
-          value={appId}
-          onChange={(e) => setAppId(e.target.value)}
-          required
-        />
-
-        {mode === 'signup' && (
-          <input
-            className="border p-2 rounded"
-            placeholder='roles (e.g. WRITER,ADMIN)'
-            value={roles}
-            onChange={(e) => setRoles(e.target.value)}
-          />
-        )}
 
         <button className="border px-3 py-2 rounded">
           {mode === 'login' ? 'Login' : 'Create account'}
