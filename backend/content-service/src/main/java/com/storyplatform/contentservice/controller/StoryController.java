@@ -2,8 +2,8 @@ package com.storyplatform.contentservice.controller;
 
 import com.storyplatform.contentservice.domain.Story;
 import com.storyplatform.contentservice.domain.StoryStatus;
-import com.storyplatform.contentservice.dto.StoryRequestDto;
 import com.storyplatform.contentservice.dto.StoryResponseDto;
+import com.storyplatform.contentservice.dto.WriterStoryCreateRequestDto;
 import com.storyplatform.contentservice.service.StoryService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -12,6 +12,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,13 +64,18 @@ public class StoryController {
     // NOTE: These are capability endpoints.
     // Authorization = role (WRITER) + ownership checks in Phase 3 (service layer).
     // For Phase 2, we enforce role in SecurityConfig and keep behavior consistent.
+    // WRITER: Create story (authorId comes from token)
 
     @PostMapping("/writer/stories")
-    public ResponseEntity<StoryResponseDto> create(
-            @Valid @RequestBody StoryRequestDto request
+    public ResponseEntity<StoryResponseDto> createWriter(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody WriterStoryCreateRequestDto request
     ) {
-        Story story = new Story(request.title(), request.authorId(), request.synopsis());
+        String authorId = jwt.getSubject(); // ✅ source of truth
+
+        Story story = new Story(request.title(), authorId, request.synopsis());
         Story saved = storyService.create(story);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
     }
 
@@ -81,16 +88,17 @@ public class StoryController {
         return ResponseEntity.ok(toResponse(story));
     }
 
-    /**
-     * Writer listing by authorId (Phase 2 keeps this; Phase 3 should derive authorId from token)
-     */
+    // WRITER: List my stories (authorId comes from token)
     @GetMapping("/writer/stories")
-    public ResponseEntity<Page<StoryResponseDto>> getStoriesByAuthorWriter(
-            @RequestParam String authorId,
+    public ResponseEntity<Page<StoryResponseDto>> getMyStories(
+            @AuthenticationPrincipal Jwt jwt,
             Pageable pageable
     ) {
+        String authorId = jwt.getSubject(); // ✅ source of truth
+
         Page<StoryResponseDto> result =
-                storyService.getStoriesByAuthor(authorId, pageable).map(this::toResponse);
+                storyService.getStoriesByAuthor(authorId, pageable)
+                        .map(this::toResponse);
 
         return ResponseEntity.ok(result);
     }
