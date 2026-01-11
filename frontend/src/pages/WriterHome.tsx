@@ -6,7 +6,6 @@ import type { StorySummary } from '../types';
 export default function WriterHome() {
   const nav = useNavigate();
   const [title, setTitle] = useState('');
-  const [authorId, setAuthorId] = useState('');
   const [synopsis, setSynopsis] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [myStories, setMyStories] = useState<StorySummary[]>([]);
@@ -14,17 +13,13 @@ export default function WriterHome() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   async function loadMyStories() {
-    if (!authorId) {
-      setError('Enter your author id to load your stories');
-      return;
-    }
 
     setError(null);
     setLoadingMine(true);
 
     try {
       const page = await apiGet<{ content?: StorySummary[] }>(
-        `/api/v1/content/writer/stories?authorId=${encodeURIComponent(authorId)}&page=0&size=50`
+        `/api/v1/content/writer/stories?page=0&size=50`
       );
       setMyStories(page.content ?? []);
     } catch (err: unknown) {
@@ -40,7 +35,10 @@ export default function WriterHome() {
     setFieldErrors({});
 
     try {
-      const story = await apiPost<StorySummary>('/api/v1/content/writer/stories', { title, authorId, synopsis });
+      const story = await apiPost<StorySummary>(
+        '/api/v1/content/writer/stories',
+        { title, synopsis }
+      );
       nav(`/write/story/${story.id}`);
       await loadMyStories();
     } catch (err: unknown) {
@@ -71,14 +69,7 @@ export default function WriterHome() {
           required
         />
         {fieldErrors.title && <div className="text-red-600 text-sm">{fieldErrors.title}</div>}
-        <input
-          className="border p-2 rounded"
-          placeholder="Author id (temporary)"
-          value={authorId}
-          onChange={(e) => setAuthorId(e.target.value)}
-          required
-        />
-        {fieldErrors.authorId && <div className="text-red-600 text-sm">{fieldErrors.authorId}</div>}
+        
         <textarea
           className="border p-2 rounded"
           placeholder="Synopsis"
