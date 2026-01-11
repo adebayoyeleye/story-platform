@@ -22,12 +22,12 @@ jobs:
 
     - name: Build Backend
       working-directory: backend/content-service
-      run: ./mvnw clean package -DskipTests
+      run: bash ./mvnw clean package -DskipTests
 
     - name: Build Auth Service
       working-directory: backend/auth-service
-      run: ./mvnw clean package -DskipTests
-
+      run: bash ./mvnw clean package -DskipTests
+      
     # ---------- Build Frontend with Caching ----------
     - name: Set up Node
       uses: actions/setup-node@v4
