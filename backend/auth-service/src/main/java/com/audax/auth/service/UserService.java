@@ -25,14 +25,15 @@ public class UserService {
         repo.findByEmail(email).ifPresent(u -> { throw new IllegalArgumentException("Email already exists"); });
 
         // validate roles exist in DB for this appId (no redeploy needed to add roles)
-        roleCatalog.assertRolesExist(appId, roles);
+        var safeRoles = (roles == null) ? List.<String>of() : roles;
+        roleCatalog.assertRolesExist(appId, safeRoles);
 
         User u = new User();
         u.setEmail(email);
         u.setPasswordHash(encoder.encode(rawPassword));
 
         var rolesByApp = new HashMap<String, List<String>>();
-        rolesByApp.put(appId, roles);
+        rolesByApp.put(appId, safeRoles);
         u.setRolesByApp(rolesByApp);
 
         return repo.save(u);

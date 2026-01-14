@@ -12,7 +12,7 @@ export default function AuthPage() {
 
   // Phase 2 decision
   const appId = "storyapp";
-  const roles = "WRITER"; // comma-separated for signup
+  // const roles = "WRITER"; // comma-separated for signup
 
   const [error, setError] = useState<string | null>(null);
 
@@ -26,7 +26,7 @@ export default function AuthPage() {
           email,
           password,
           appId,
-          roles: roles.split(',').map(r => r.trim()).filter(Boolean),
+          // roles: roles.split(',').map(r => r.trim()).filter(Boolean),
         });
       } else {
         await login({ email, password, appId });

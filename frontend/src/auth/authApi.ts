@@ -12,7 +12,7 @@ export async function signup(payload: {
   email: string;
   password: string;
   appId: string;
-  roles: string[];
+  // roles: string[];
 }): Promise<AuthResponse> {
   const res = await fetch('/api/v1/auth/signup', {
     method: 'POST',
