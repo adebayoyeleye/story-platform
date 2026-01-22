@@ -6,7 +6,8 @@ import {
   apiPut,
   apiPatchNoContent,
   apiPatchJson,
-  ApiError
+  ApiError,
+  apiDelete
 } from '../api';
 import type { StorySummary, ChapterSummary, Chapter, ContributorRole } from '../types';
 
@@ -167,7 +168,12 @@ export default function WriterStory() {
       setNewContributorUserId('');
       setNewContributorPenName('');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to add contributor');
+      if (err instanceof ApiError) {
+        setError(err.message);
+        setFieldErrors(err.fieldErrors);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to add contributor');
+      }
     }
   }
 
@@ -181,7 +187,12 @@ export default function WriterStory() {
       });
       setStory(updated);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update contributor');
+      if (err instanceof ApiError) {
+        setError(err.message);
+        setFieldErrors(err.fieldErrors);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to update contributor');
+      }
     }
   }
 
@@ -189,14 +200,18 @@ export default function WriterStory() {
     if (!storyId) return;
     setError(null);
     try {
-      // your api.ts doesn’t have delete helper; simplest:
-      await fetch(`/api/v1/content/writer/stories/${storyId}/contributors/${userId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${localStorage.getItem('access_token') ?? ''}` }
-      });
-      await refresh();
+      const updated = await apiDelete<StorySummary>(
+      `/api/v1/content/writer/stories/${storyId}/contributors/${userId}`
+    );
+    setStory(updated);
+      // await refresh();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to remove contributor');
+      if (err instanceof ApiError) {
+        setError(err.message);
+        setFieldErrors(err.fieldErrors);
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to remove contributor');
+      }
     }
   }
 
