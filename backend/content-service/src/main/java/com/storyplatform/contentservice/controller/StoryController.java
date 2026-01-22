@@ -1,9 +1,15 @@
 package com.storyplatform.contentservice.controller;
 
+import com.storyplatform.contentservice.domain.ContributorRole;
 import com.storyplatform.contentservice.domain.Story;
+import com.storyplatform.contentservice.domain.StoryContributor;
 import com.storyplatform.contentservice.domain.StoryStatus;
+import com.storyplatform.contentservice.dto.AddContributorRequestDto;
+import com.storyplatform.contentservice.dto.StoryContributorDto;
 import com.storyplatform.contentservice.dto.StoryResponseDto;
+import com.storyplatform.contentservice.dto.UpdateContributorRequestDto;
 import com.storyplatform.contentservice.dto.WriterStoryCreateRequestDto;
+import com.storyplatform.contentservice.service.BylineBuilder;
 import com.storyplatform.contentservice.service.StoryService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -16,6 +22,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+// import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 @RestController
 @RequestMapping("/api/v1/content")
@@ -74,6 +81,16 @@ public class StoryController {
         String authorId = jwt.getSubject(); // ✅ source of truth
 
         Story story = new Story(request.title(), authorId, request.synopsis());
+        
+        // seed contributors
+        story.getContributors().add(new StoryContributor(
+                authorId,
+                ContributorRole.OWNER,
+                request.penName() // optional
+        ));
+
+        story.setByline(BylineBuilder.build(story));
+
         Story saved = storyService.create(story);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
@@ -115,13 +132,59 @@ public class StoryController {
         return ResponseEntity.ok(toResponse(updated));
     }
 
+    @PostMapping("/writer/stories/{storyId}/contributors")
+    public ResponseEntity<StoryResponseDto> addContributor(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String storyId,
+            @Valid @RequestBody AddContributorRequestDto req
+    ) {
+        Story updated = storyService.addContributor(storyId, jwt.getSubject(), req);
+        return ResponseEntity.ok(toResponse(updated));
+    }
+
+    @PatchMapping("/writer/stories/{storyId}/contributors/{userId}")
+    public ResponseEntity<StoryResponseDto> updateContributor(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String storyId,
+            @PathVariable String userId,
+            @RequestBody UpdateContributorRequestDto req
+    ) {
+        Story updated = storyService.updateContributor(storyId, jwt.getSubject(), userId, req);
+        return ResponseEntity.ok(toResponse(updated));
+    }
+
+    @DeleteMapping("/writer/stories/{storyId}/contributors/{userId}")
+    public ResponseEntity<StoryResponseDto> removeContributor(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String storyId,
+            @PathVariable String userId
+    ) {
+        Story updated = storyService.removeContributor(storyId, jwt.getSubject(), userId);
+        return ResponseEntity.ok(toResponse(updated));
+    }
+
     private StoryResponseDto toResponse(Story story) {
+
+        var byline = story.getByline();
+        if (byline == null || byline.isBlank()) {
+                byline = com.storyplatform.contentservice.service.BylineBuilder.build(story);
+        }
+
         return new StoryResponseDto(
                 story.getId(),
                 story.getTitle(),
-                story.getAuthorId(),
+                // story.getAuthorId(),
                 story.getSynopsis(),
-                story.getStatus()
+                story.getStatus(),
+                byline,
+                story.getContributors().stream()
+                        .map(sc -> new StoryContributorDto(
+                                sc.getUserId(),
+                                sc.getRole(),
+                                sc.getPenName(), 
+                                sc.getAddedAt()
+                        ))
+                        .toList()
         );
     }
 }
