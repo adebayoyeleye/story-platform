@@ -30,6 +30,32 @@ public class StoryServiceImpl implements StoryService {
         }
     }
 
+    // private helpers
+
+    private boolean isOwner(Story story, String userId) {
+        return story.getContributors().stream()
+                .anyMatch(c -> c.getUserId().equals(userId)
+                        && c.getRole() == ContributorRole.OWNER);
+    }
+
+    private boolean isCoAuthor(Story story, String userId) {
+        return story.getContributors().stream()
+                .anyMatch(c -> c.getUserId().equals(userId)
+                        && c.getRole() == ContributorRole.CO_AUTHOR);
+    }
+
+    private void requireOwner(Story story, String requesterUserId) {
+        if (!isOwner(story, requesterUserId)) {
+            throw new AccessDeniedException("Only OWNER can perform this action");
+        }
+    }
+
+    private void requireOwnerOrCoAuthor(Story story, String requesterUserId) {
+        if (!(isOwner(story, requesterUserId) || isCoAuthor(story, requesterUserId))) {
+            throw new AccessDeniedException("Only OWNER or CO_AUTHOR can perform this action");
+        }
+    }
+
     @Override
     public Story create(Story story) {
         return storyRepository.save(story);
@@ -100,10 +126,8 @@ public class StoryServiceImpl implements StoryService {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
 
-        // Phase 2 rule: only story author can manage contributors
-        if (!story.getAuthorId().equals(requesterUserId)) {
-            throw new AccessDeniedException("Not allowed");
-        }
+        // Phase-3-ish rule: only OWNER can manage contributors
+        requireOwner(story, requesterUserId);
 
         boolean exists = story.getContributors().stream()
                 .anyMatch(c -> c.getUserId().equals(req.userId()));
@@ -124,9 +148,7 @@ public class StoryServiceImpl implements StoryService {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
 
-        if (!story.getAuthorId().equals(requesterUserId)) {
-            throw new AccessDeniedException("Not allowed");
-        }
+        requireOwner(story, requesterUserId);
 
         var contributor = story.getContributors().stream()
                 .filter(c -> c.getUserId().equals(contributorUserId))
@@ -152,9 +174,7 @@ public class StoryServiceImpl implements StoryService {
         Story story = storyRepository.findById(storyId)
                 .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
 
-        if (!story.getAuthorId().equals(requesterUserId)) {
-            throw new org.springframework.security.access.AccessDeniedException("Not allowed");
-        }
+        requireOwner(story, requesterUserId);
 
         var target = story.getContributors().stream()
                 .filter(c -> c.getUserId().equals(contributorUserId))
