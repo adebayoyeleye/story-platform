@@ -8,7 +8,7 @@ import {
   apiPatchJson,
   ApiError
 } from '../api';
-import type { StorySummary, ChapterSummary, Chapter } from '../types';
+import type { StorySummary, ChapterSummary, Chapter, ContributorRole } from '../types';
 
 export default function WriterStory() {
   const { storyId } = useParams();
@@ -20,6 +20,11 @@ export default function WriterStory() {
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [error, setError] = useState<string | null>(null);
+
+  const [newContributorUserId, setNewContributorUserId] = useState('');
+  const [newContributorRole, setNewContributorRole] = useState<ContributorRole>('CO_AUTHOR');
+  const [newContributorPenName, setNewContributorPenName] = useState('');
+
 
   const nextChapterNumber = useMemo(() => {
     if (chapters.length === 0) return 1;
@@ -149,6 +154,52 @@ export default function WriterStory() {
     }
   }
 
+  async function addContributor() {
+    if (!storyId) return;
+    setError(null);
+    try {
+      const updated = await apiPost<StorySummary>(`/api/v1/content/writer/stories/${storyId}/contributors`, {
+        userId: newContributorUserId,
+        role: newContributorRole,
+        penName: newContributorPenName || null
+      });
+      setStory(updated);
+      setNewContributorUserId('');
+      setNewContributorPenName('');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to add contributor');
+    }
+  }
+
+  async function updateContributor(userId: string, role?: ContributorRole, penName?: string | null) {
+    if (!storyId) return;
+    setError(null);
+    try {
+      const updated = await apiPatchJson<StorySummary>(`/api/v1/content/writer/stories/${storyId}/contributors/${userId}`, {
+        role,
+        penName
+      });
+      setStory(updated);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update contributor');
+    }
+  }
+
+  async function removeContributor(userId: string) {
+    if (!storyId) return;
+    setError(null);
+    try {
+      // your api.ts doesn’t have delete helper; simplest:
+      await fetch(`/api/v1/content/writer/stories/${storyId}/contributors/${userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${localStorage.getItem('access_token') ?? ''}` }
+      });
+      await refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to remove contributor');
+    }
+  }
+
   if (!storyId) return <div className="p-5 max-w-4xl mx-auto">Missing story id</div>;
   if (!story) return <div className="p-5 max-w-4xl mx-auto">Loading...</div>;
 
@@ -163,7 +214,7 @@ export default function WriterStory() {
             <span className="text-xs border rounded px-2 py-1 text-gray-700">{story.status}</span>
           </div>
 
-          <div className="text-gray-600">Author: {story.authorId}</div>
+          <div className="text-gray-600">By: {story.byline}</div>
 
           <div className="mt-2 flex items-center gap-2">
             <label className="text-sm text-gray-600">Story status:</label>
@@ -185,6 +236,70 @@ export default function WriterStory() {
         <div className="flex gap-3">
           <Link to="/" className="text-blue-600 hover:underline">Library</Link>
           <Link to="/write" className="text-blue-600 hover:underline">Writer Home</Link>
+        </div>
+      </div>
+
+      {/* Contributors Section */}
+      <div className="border rounded p-4">
+        <h2 className="text-xl font-semibold mb-3">Contributors</h2>
+
+        <div className="text-sm text-gray-600 mb-2">
+          Public byline: <span className="font-medium">{story.byline}</span>
+        </div>
+
+        <div className="grid gap-2">
+          {(story.contributors ?? []).map(c => (
+            <div key={c.userId} className="border rounded p-2 flex items-center justify-between gap-2">
+              <div>
+                <div className="font-medium">{c.penName ?? c.userId}</div>
+                <div className="text-xs text-gray-600">{c.userId} • {c.role}</div>
+              </div>
+
+              {c.role !== 'OWNER' && (
+                <div className="flex gap-2">
+                  <select
+                    className="border rounded px-2 py-1"
+                    value={c.role}
+                    onChange={(e) => updateContributor(c.userId, e.target.value as ContributorRole, c.penName ?? null)}
+                  >
+                    <option value="CO_AUTHOR">CO_AUTHOR</option>
+                    <option value="EDITOR">EDITOR</option>
+                  </select>
+
+                  <button className="border px-2 py-1 rounded" onClick={() => removeContributor(c.userId)}>
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 grid gap-2">
+          <div className="font-medium">Add contributor</div>
+          <input
+            className="border p-2 rounded"
+            placeholder="User ID (JWT sub)"
+            value={newContributorUserId}
+            onChange={(e) => setNewContributorUserId(e.target.value)}
+          />
+          <input
+            className="border p-2 rounded"
+            placeholder="Pen name (optional)"
+            value={newContributorPenName}
+            onChange={(e) => setNewContributorPenName(e.target.value)}
+          />
+          <select
+            className="border rounded px-2 py-2"
+            value={newContributorRole}
+            onChange={(e) => setNewContributorRole(e.target.value as ContributorRole)}
+          >
+            <option value="CO_AUTHOR">CO_AUTHOR</option>
+            <option value="EDITOR">EDITOR</option>
+          </select>
+          <button className="border px-3 py-2 rounded" onClick={addContributor} disabled={!newContributorUserId.trim()}>
+            Add
+          </button>
         </div>
       </div>
 

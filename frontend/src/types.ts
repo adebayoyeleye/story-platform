@@ -1,12 +1,22 @@
 export type StoryStatus = 'DRAFT' | 'ONGOING' | 'COMPLETED' | 'ARCHIVED';
 export type ChapterStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
+export type ContributorRole = 'OWNER' | 'CO_AUTHOR' | 'EDITOR';
+
+export type StoryContributor = {
+  userId: string;
+  role: ContributorRole;
+  penName?: string | null;
+  addedAt?: string;
+};
+
 export type StorySummary = {
   id: string;
   title: string;
-  authorId: string;
   synopsis?: string | null;
   status: StoryStatus;
+  byline?: string | null;
+  contributors?: StoryContributor[];
 };
 
 export type ChapterSummary = {

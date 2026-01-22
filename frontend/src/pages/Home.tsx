@@ -81,7 +81,7 @@ export default function Home() {
                 {story.title}
               </Link>
             </h2>
-            <p className="text-gray-600">By {story.authorId}</p>
+            <p className="text-gray-600">By {story.byline}</p>
             <p className="mt-2 text-gray-800">{story.synopsis}</p>
           </div>
         ))}

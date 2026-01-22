@@ -48,7 +48,7 @@ export default function StoryDetail() {
     <div className="p-5 max-w-4xl mx-auto">
       <Link to="/" className="text-gray-500 hover:underline">← Back to Library</Link>
       <h1 className="text-4xl font-bold mt-4">{story.title}</h1>
-      <p className="text-xl text-gray-600 mb-8">{story.authorId}</p>
+      <p className="text-xl text-gray-600 mb-8">By {story.byline}</p>
       
       <h3 className="text-2xl font-semibold mb-4">Chapters</h3>
       <div className="space-y-3">
