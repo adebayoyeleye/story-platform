@@ -1,3 +1,4 @@
+import { apiGet } from '../api';
 import { setTokens, getRefreshToken, clearTokens } from './authStore';
 
 export type AuthResponse = {
@@ -62,4 +63,15 @@ export async function refresh(): Promise<AuthResponse> {
   const data: AuthResponse = await res.json();
   setTokens(data.accessToken, data.refreshToken);
   return data;
+}
+
+export type UserLookupResult = {
+  id: string;               // UUID from auth-service
+  email: string;
+  displayName?: string | null;
+};
+
+export async function apiGetUserByEmail(email: string): Promise<UserLookupResult> {
+  const encoded = encodeURIComponent(email.trim());
+  return apiGet<UserLookupResult>(`/api/v1/auth/users/lookup?email=${encoded}`);
 }

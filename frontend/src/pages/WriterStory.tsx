@@ -9,7 +9,8 @@ import {
   ApiError,
   apiDelete
 } from '../api';
-import type { StorySummary, ChapterSummary, Chapter, ContributorRole } from '../types';
+import type { StorySummary, ChapterSummary, Chapter, StoryContributor, ContributorRole } from '../types';
+import { apiGetUserByEmail } from '../auth/authApi';
 
 export default function WriterStory() {
   const { storyId } = useParams();
@@ -22,9 +23,22 @@ export default function WriterStory() {
   const [newContent, setNewContent] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const [newContributorUserId, setNewContributorUserId] = useState('');
+  // const [newContributorUserId, setNewContributorUserId] = useState('');
   const [newContributorRole, setNewContributorRole] = useState<ContributorRole>('CO_AUTHOR');
   const [newContributorPenName, setNewContributorPenName] = useState('');
+
+  // const [isLoading, setIsLoading] = useState(true);
+
+  // meta editing
+  const [editTitle, setEditTitle] = useState('');
+  const [editSynopsis, setEditSynopsis] = useState('');
+  const [editOwnerPenName, setEditOwnerPenName] = useState('');
+
+  // contributors
+  const [newContributorEmail, setNewContributorEmail] = useState('');
+  const [isAddingContributor, setIsAddingContributor] = useState(false);
+
+
 
 
   const nextChapterNumber = useMemo(() => {
@@ -43,6 +57,11 @@ export default function WriterStory() {
       ]);
       setStory(s);
       setChapters(list.content ?? []);
+      setEditTitle(s.title);
+      setEditSynopsis(s.synopsis ?? '');
+      // We can't extract ownerPenName directly from the DTO yet,
+      // so we leave editOwnerPenName empty unless you later add it.
+      setEditOwnerPenName('');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to load');
     }
@@ -157,16 +176,27 @@ export default function WriterStory() {
 
   async function addContributor() {
     if (!storyId) return;
+    if (!newContributorEmail.trim()) return;
+
     setError(null);
+    setIsAddingContributor(true);
+
     try {
-      const updated = await apiPost<StorySummary>(`/api/v1/content/writer/stories/${storyId}/contributors`, {
-        userId: newContributorUserId,
-        role: newContributorRole,
-        penName: newContributorPenName || null
-      });
+      // 1) Look up user by email
+      const user = await apiGetUserByEmail(newContributorEmail);
+      // 2) Call content-service with UUID
+      const updated = await apiPost<StorySummary>(
+        `/api/v1/content/writer/stories/${storyId}/contributors`,
+        {
+          userId: user.id,
+          role: newContributorRole,
+          penName: newContributorPenName || null,
+        }
+      );
       setStory(updated);
-      setNewContributorUserId('');
+      setNewContributorEmail('');
       setNewContributorPenName('');
+      setNewContributorRole('CO_AUTHOR');
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -174,6 +204,8 @@ export default function WriterStory() {
       } else {
         setError(err instanceof Error ? err.message : 'Failed to add contributor');
       }
+    } finally {
+      setIsAddingContributor(false);
     }
   }
 
@@ -215,6 +247,38 @@ export default function WriterStory() {
     }
   }
 
+  async function handleSaveMeta() {
+    if (!storyId) return;
+    setError(null);
+    try {
+      const payload: {
+        title?: string;
+        synopsis?: string;
+        ownerPenName?: string;
+      } = {};
+
+      if (editTitle.trim() !== (story?.title ?? '')) {
+        payload.title = editTitle.trim();
+      }
+      if (editSynopsis !== (story?.synopsis ?? '')) {
+        payload.synopsis = editSynopsis;
+      }
+      if (editOwnerPenName.trim().length > 0) {
+        payload.ownerPenName = editOwnerPenName.trim();
+      }
+
+      const updated = await apiPatchJson<StorySummary>(
+        `/api/v1/content/writer/stories/${storyId}`,
+        payload
+      );
+
+      setStory(updated);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to update story');
+    }
+  }
+
+
   if (!storyId) return <div className="p-5 max-w-4xl mx-auto">Missing story id</div>;
   if (!story) return <div className="p-5 max-w-4xl mx-auto">Loading...</div>;
 
@@ -229,7 +293,7 @@ export default function WriterStory() {
             <span className="text-xs border rounded px-2 py-1 text-gray-700">{story.status}</span>
           </div>
 
-          <div className="text-gray-600">By: {story.byline}</div>
+          <div className="text-gray-600">By: {story.byline ?? '—'}</div>
 
           <div className="mt-2 flex items-center gap-2">
             <label className="text-sm text-gray-600">Story status:</label>
@@ -254,69 +318,150 @@ export default function WriterStory() {
         </div>
       </div>
 
-      {/* Contributors Section */}
-      <div className="border rounded p-4">
-        <h2 className="text-xl font-semibold mb-3">Contributors</h2>
-
-        <div className="text-sm text-gray-600 mb-2">
-          Public byline: <span className="font-medium">{story.byline}</span>
+      {/* Story meta editing */}
+      <section className="border rounded p-4 space-y-3">
+        <h1 className="text-2xl font-semibold">Story Settings</h1>
+        <div>
+          <label className="block text-sm font-medium mb-1">Title</label>
+          <input
+            className="border rounded w-full px-3 py-2"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+          />
         </div>
 
-        <div className="grid gap-2">
-          {(story.contributors ?? []).map(c => (
-            <div key={c.userId} className="border rounded p-2 flex items-center justify-between gap-2">
+        <div>
+          <label className="block text-sm font-medium mb-1">Synopsis</label>
+          <textarea
+            className="border rounded w-full px-3 py-2 min-h-[100px]"
+            value={editSynopsis}
+            onChange={(e) => setEditSynopsis(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            Owner Pen Name
+            <span className="text-xs text-gray-500 ml-2">
+              (optional – affects public byline)
+            </span>
+          </label>
+          <input
+            className="border rounded w-full px-3 py-2"
+            placeholder="e.g. Bayo Writes"
+            value={editOwnerPenName}
+            onChange={(e) => setEditOwnerPenName(e.target.value)}
+          />
+        </div>
+
+        <button
+          className="inline-flex items-center px-4 py-2 border rounded bg-gray-900 text-white text-sm"
+          onClick={handleSaveMeta}
+        >
+          Save story settings
+        </button>
+
+        <p className="text-xs text-gray-600 mt-2">
+          Public byline: <span className="font-medium">{story.byline ?? '—'}</span>
+        </p>
+      </section>
+
+      {/* Contributors panel */}
+      <section className="border rounded p-4 space-y-4">
+        <h2 className="text-xl font-semibold">Contributors</h2>
+
+        {/* Existing contributors list */}
+        <div className="space-y-2">
+          {(story.contributors ?? []).map((c: StoryContributor) => (
+            <div
+              key={c.userId}
+              className="border rounded p-2 flex items-center justify-between gap-3"
+            >
               <div>
                 <div className="font-medium">{c.penName ?? c.userId}</div>
-                <div className="text-xs text-gray-600">{c.userId} • {c.role}</div>
+                <div className="text-xs text-gray-600">
+                  {c.role} • {c.userId}
+                </div>
               </div>
 
               {c.role !== 'OWNER' && (
                 <div className="flex gap-2">
                   <select
-                    className="border rounded px-2 py-1"
+                    className="border rounded px-2 py-1 text-sm"
                     value={c.role}
-                    onChange={(e) => updateContributor(c.userId, e.target.value as ContributorRole, c.penName ?? null)}
+                    onChange={(e) =>
+                      updateContributor(
+                        c.userId,
+                        e.target.value as ContributorRole,
+                        c.penName ?? null
+                      )
+                    }
                   >
                     <option value="CO_AUTHOR">CO_AUTHOR</option>
                     <option value="EDITOR">EDITOR</option>
                   </select>
 
-                  <button className="border px-2 py-1 rounded" onClick={() => removeContributor(c.userId)}>
+                  <button
+                    className="border rounded px-2 py-1 text-sm"
+                    onClick={() => removeContributor(c.userId)}
+                  >
                     Remove
                   </button>
                 </div>
               )}
             </div>
           ))}
+
+          {(!story.contributors || story.contributors.length === 0) && (
+            <p className="text-sm text-gray-500">No contributors yet.</p>
+          )}
         </div>
 
-        <div className="mt-4 grid gap-2">
-          <div className="font-medium">Add contributor</div>
-          <input
-            className="border p-2 rounded"
-            placeholder="User ID (JWT sub)"
-            value={newContributorUserId}
-            onChange={(e) => setNewContributorUserId(e.target.value)}
-          />
-          <input
-            className="border p-2 rounded"
-            placeholder="Pen name (optional)"
-            value={newContributorPenName}
-            onChange={(e) => setNewContributorPenName(e.target.value)}
-          />
-          <select
-            className="border rounded px-2 py-2"
-            value={newContributorRole}
-            onChange={(e) => setNewContributorRole(e.target.value as ContributorRole)}
+        {/* Add contributor form (EMAIL-based) */}
+        <div className="border-t pt-4 space-y-2">
+          <h3 className="text-sm font-semibold">Add contributor</h3>
+
+          <div>
+            <label className="block text-xs font-medium mb-1">Contributor email</label>
+            <input
+              className="border rounded w-full px-3 py-2 text-sm"
+              placeholder="user@example.com"
+              value={newContributorEmail}
+              onChange={(e) => setNewContributorEmail(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium mb-1">Pen name (optional)</label>
+            <input
+              className="border rounded w-full px-3 py-2 text-sm"
+              placeholder="Used in byline if set"
+              value={newContributorPenName}
+              onChange={(e) => setNewContributorPenName(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium mb-1">Role</label>
+            <select
+              className="border rounded px-3 py-2 text-sm"
+              value={newContributorRole}
+              onChange={(e) => setNewContributorRole(e.target.value as ContributorRole)}
+            >
+              <option value="CO_AUTHOR">CO_AUTHOR</option>
+              <option value="EDITOR">EDITOR</option>
+            </select>
+          </div>
+
+          <button
+            className="inline-flex items-center px-4 py-2 border rounded bg-gray-900 text-white text-sm disabled:opacity-60"
+            onClick={addContributor}
+            disabled={!newContributorEmail.trim() || isAddingContributor}
           >
-            <option value="CO_AUTHOR">CO_AUTHOR</option>
-            <option value="EDITOR">EDITOR</option>
-          </select>
-          <button className="border px-3 py-2 rounded" onClick={addContributor} disabled={!newContributorUserId.trim()}>
-            Add
+            {isAddingContributor ? 'Adding…' : 'Add contributor'}
           </button>
         </div>
-      </div>
+      </section>
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Left: chapter list */}
