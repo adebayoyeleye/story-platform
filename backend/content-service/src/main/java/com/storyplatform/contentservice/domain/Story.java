@@ -53,4 +53,14 @@ public class Story {
         this.status = status;
         this.updatedAt = Instant.now();
     }
+
+    public void setTitle(String title2) {
+        this.title = title2;
+        this.updatedAt = Instant.now();
+    }
+
+    public void setSynopsis(String synopsis2) {
+        this.synopsis = synopsis2;
+        this.updatedAt = Instant.now();
+    }
 }

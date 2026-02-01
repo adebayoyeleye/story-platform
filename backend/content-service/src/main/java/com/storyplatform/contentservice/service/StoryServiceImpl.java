@@ -4,6 +4,7 @@ import com.storyplatform.contentservice.domain.ContributorRole;
 import com.storyplatform.contentservice.domain.Story;
 import com.storyplatform.contentservice.domain.StoryStatus;
 import com.storyplatform.contentservice.dto.UpdateContributorRequestDto;
+import com.storyplatform.contentservice.dto.UpdateStoryMetaRequestDto;
 import com.storyplatform.contentservice.exception.ResourceNotFoundException;
 import com.storyplatform.contentservice.repository.StoryRepository;
 
@@ -119,6 +120,54 @@ public class StoryServiceImpl implements StoryService {
     public Page<Story> getStoriesByAuthor(String authorId, Pageable pageable) {
         enforcePageSize(pageable);
         return storyRepository.findByAuthorId(authorId, pageable);
+    }
+
+    @Override
+    public Story updateStoryMeta(String storyId, String requesterUserId, UpdateStoryMetaRequestDto req) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
+    
+        boolean requesterIsOwner = isOwner(story, requesterUserId);
+        boolean requesterIsCoAuthor = isCoAuthor(story, requesterUserId);
+    
+        if (!(requesterIsOwner || requesterIsCoAuthor)) {
+            throw new AccessDeniedException("Only OWNER or CO_AUTHOR can update story meta");
+        }
+    
+        boolean changed = false;
+    
+        if (req.title() != null && !req.title().isBlank()
+                && !req.title().equals(story.getTitle())) {
+            story.setTitle(req.title());
+            changed = true;
+        }
+    
+        if (req.synopsis() != null
+                && !req.synopsis().equals(story.getSynopsis())) {
+            story.setSynopsis(req.synopsis());
+            changed = true;
+        }
+    
+        if (req.ownerPenName() != null) {
+            if (!requesterIsOwner) {
+                throw new AccessDeniedException("Only OWNER can change owner pen name");
+            }
+            StoryContributor owner = story.getContributors().stream()
+                    .filter(c -> c.getUserId().equals(requesterUserId)
+                            && c.getRole() == ContributorRole.OWNER)
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("OWNER contributor not found"));
+    
+            owner.setPenName(req.ownerPenName());
+            changed = true;
+        }
+    
+        if (changed) {
+            story.setByline(BylineBuilder.build(story));
+            return storyRepository.save(story);
+        }
+    
+        return story; // no-op, but safe
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.storyplatform.contentservice.dto.AddContributorRequestDto;
 import com.storyplatform.contentservice.dto.StoryContributorDto;
 import com.storyplatform.contentservice.dto.StoryResponseDto;
 import com.storyplatform.contentservice.dto.UpdateContributorRequestDto;
+import com.storyplatform.contentservice.dto.UpdateStoryMetaRequestDto;
 import com.storyplatform.contentservice.dto.WriterStoryCreateRequestDto;
 import com.storyplatform.contentservice.service.BylineBuilder;
 import com.storyplatform.contentservice.service.StoryService;
@@ -132,6 +133,17 @@ public class StoryController {
         return ResponseEntity.ok(toResponse(updated));
     }
 
+    @PatchMapping("/writer/stories/{storyId}")
+    public ResponseEntity<StoryResponseDto> updateStoryMeta(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String storyId,
+            @RequestBody UpdateStoryMetaRequestDto request
+    ) {
+        String userId = jwt.getSubject();
+        Story updated = storyService.updateStoryMeta(storyId, userId, request);
+        return ResponseEntity.ok(toResponse(updated));
+    }
+
     @PostMapping("/writer/stories/{storyId}/contributors")
     public ResponseEntity<StoryResponseDto> addContributor(
             @AuthenticationPrincipal Jwt jwt,
@@ -173,7 +185,6 @@ public class StoryController {
         return new StoryResponseDto(
                 story.getId(),
                 story.getTitle(),
-                // story.getAuthorId(),
                 story.getSynopsis(),
                 story.getStatus(),
                 byline,
