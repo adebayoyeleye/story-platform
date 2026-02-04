@@ -17,6 +17,7 @@ import { Container } from "@/components/layout/Container"
 import { useToast } from "@/components/ui/ToastHost"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { Input } from "@/components/ui/Input"
+import { Field } from '@/components/ui/Field';
 
 
 export default function WriterStory() {
@@ -289,6 +290,8 @@ export default function WriterStory() {
   async function handleSaveMeta() {
     if (!storyId) return;
     setError(null);
+    setFieldErrors({});
+
     try {
       const payload: {
         title?: string;
@@ -312,9 +315,17 @@ export default function WriterStory() {
       );
 
       setStory(updated);
+      toast.push({ title: "Saved", kind: "success" });
+
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to update story');
-    }
+        if (err instanceof ApiError) {
+          setError(err.message)
+          setFieldErrors(err.fieldErrors)
+        } else {
+          setError(err instanceof Error ? err.message : "Failed to update story")
+        }
+        toast.push({ title: "Save failed", kind: "error" })
+      }
   }
 
 
@@ -337,10 +348,15 @@ export default function WriterStory() {
           content: newContent,
         })
         setIsDirty(false)
-        toast.push({ title: "Saved", kind: "success" })
-      } catch {
-        toast.push({ title: "Autosave failed", kind: "error" })
-      } finally {
+      } catch (err: unknown) {
+          if (err instanceof ApiError) {
+            setError(err.message)
+            setFieldErrors(err.fieldErrors)
+          } else {
+            setError(err instanceof Error ? err.message : "Autosave failed")
+          }
+          toast.push({ title: "Autosave failed", kind: "error" })
+        } finally {
         setIsSaving(false)
       }
     }, 900)
@@ -387,21 +403,23 @@ export default function WriterStory() {
       <Collapsible title="Story Settings" description="Title, synopsis, and public byline">
         <h1 className="text-2xl font-semibold">Story Settings</h1>
         <div>
-          <label className="block text-sm font-medium mb-1">Title</label>
-          <input
-            className="border rounded w-full px-3 py-2"
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-          />
+          <Field label="Title" error={fieldErrors.title}>
+            <Input
+              aria-invalid={!!fieldErrors.title}
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+            />
+          </Field>
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Synopsis</label>
-          <textarea
-            className="border rounded w-full px-3 py-2 min-h-[100px]"
-            value={editSynopsis}
-            onChange={(e) => setEditSynopsis(e.target.value)}
-          />
+          <Field label="Synopsis" error={fieldErrors.synopsis}>
+            <textarea
+              className="border rounded w-full px-3 py-2 min-h-[100px]"
+              value={editSynopsis}
+              onChange={(e) => setEditSynopsis(e.target.value)}
+            />
+          </Field>
         </div>
 
         <div>
@@ -411,12 +429,14 @@ export default function WriterStory() {
               (optional – affects public byline)
             </span>
           </label>
-          <input
-            className="border rounded w-full px-3 py-2"
-            placeholder="e.g. Bayo Writes"
-            value={editOwnerPenName}
-            onChange={(e) => setEditOwnerPenName(e.target.value)}
-          />
+          <Field error={fieldErrors.ownerPenName}>
+            <Input
+              aria-invalid={!!fieldErrors.ownerPenName}
+              placeholder="e.g. Bayo Writes"
+              value={editOwnerPenName}
+              onChange={(e) => setEditOwnerPenName(e.target.value)}
+            />
+          </Field>
         </div>
 
         <button
@@ -487,44 +507,47 @@ export default function WriterStory() {
           <h3 className="text-sm font-semibold">Add contributor</h3>
 
           <div>
-            <label className="block text-xs font-medium mb-1">Contributor email</label>
-            <input
-              className="border rounded w-full px-3 py-2 text-sm"
-              placeholder="user@example.com"
-              value={newContributorEmail}
-              onChange={(e) => setNewContributorEmail(e.target.value)}
-            />
+            <Field label="Contributor email" error={fieldErrors.newContributorEmail}>
+              <Input
+                aria-invalid={!!fieldErrors.newContributorEmail}
+                placeholder="user@example.com"
+                value={newContributorEmail}
+                onChange={(e) => setNewContributorEmail(e.target.value)}
+              />
+            </Field>
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">Pen name (optional)</label>
-            <input
-              className="border rounded w-full px-3 py-2 text-sm"
-              placeholder="Used in byline if set"
-              value={newContributorPenName}
-              onChange={(e) => setNewContributorPenName(e.target.value)}
-            />
+            <Field label="Pen name" error={fieldErrors.newContributorPenName}>
+              <Input
+                aria-invalid={!!fieldErrors.newContributorPenName}
+                placeholder="Used in byline if set"
+                value={newContributorPenName}
+                onChange={(e) => setNewContributorPenName(e.target.value)}
+              />
+            </Field>
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">Role</label>
-            <select
-              className="border rounded px-3 py-2 text-sm"
-              value={newContributorRole}
-              onChange={(e) => setNewContributorRole(e.target.value as ContributorRole)}
-            >
-              <option value="CO_AUTHOR">CO_AUTHOR</option>
-              <option value="EDITOR">EDITOR</option>
-            </select>
+            <Field label='Role' error={fieldErrors.newContributorRole}>
+              <select
+                className="border rounded px-3 py-2 text-sm"
+                value={newContributorRole}
+                onChange={(e) => setNewContributorRole(e.target.value as ContributorRole)}
+              >
+                <option value="CO_AUTHOR">CO_AUTHOR</option>
+                <option value="EDITOR">EDITOR</option>
+              </select>
+            </Field>
           </div>
 
-          <button
+          <Button
             className="inline-flex items-center px-4 py-2 border rounded bg-gray-900 text-white text-sm disabled:opacity-60"
             onClick={addContributor}
             disabled={!newContributorEmail.trim() || isAddingContributor}
           >
             {isAddingContributor ? 'Adding…' : 'Add contributor'}
-          </button>
+          </Button>
         </Collapsible>
       </section>
 
@@ -599,20 +622,22 @@ export default function WriterStory() {
                 </div>
               )}
 
-              <Input
-                value={newTitle}
-                onChange={(e) => { setNewTitle(e.target.value); setIsDirty(true) }}
-                disabled={!canEdit}
-              />
-              {fieldErrors.title && <div className="text-red-600 text-sm">{fieldErrors.title}</div>}
+              <Field label="Chapter Title" error={fieldErrors.title}>
+                <Input
+                  value={newTitle}
+                  onChange={(e) => { setNewTitle(e.target.value); setIsDirty(true) }}
+                  disabled={!canEdit}
+                />
+              </Field>
 
-              <textarea
-                className="min-h-[320px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                value={newContent}
-                onChange={(e) => { setNewContent(e.target.value); setIsDirty(true) }}
-                disabled={!canEdit}
-              />
-              {fieldErrors.content && <div className="text-red-600 text-sm">{fieldErrors.content}</div>}
+              <Field label="Chapter Content" error={fieldErrors.content}>
+                <textarea
+                  className="min-h-[320px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={newContent}
+                  onChange={(e) => { setNewContent(e.target.value); setIsDirty(true) }}
+                  disabled={!canEdit}
+                />
+              </Field>
 
               <div className="sticky bottom-0 -mx-4 border-t bg-card px-4 py-3">
                 <div className="flex items-center justify-between gap-3">

@@ -1,2 +1,3 @@
 import AppRouter from "@/app/router"
-export default function App() { return <AppRouter /> }
+import { ToastHost } from "./components/ui/ToastHost"
+export default function App() { return <ToastHost><AppRouter /></ToastHost> }

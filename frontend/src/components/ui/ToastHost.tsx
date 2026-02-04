@@ -15,7 +15,11 @@ export function useToast() {
   return ctx
 }
 
-export function ToastHost() {
+type ToastHostProps = {
+  children: React.ReactNode
+}
+
+export function ToastHost({ children }: ToastHostProps) {
   const [toasts, setToasts] = React.useState<Toast[]>([])
 
   const push = React.useCallback((t: Omit<Toast, "id">) => {
@@ -29,6 +33,8 @@ export function ToastHost() {
 
   return (
     <ToastContext.Provider value={{ push }}>
+      {children}
+
       <div className="fixed right-4 top-4 z-50 grid gap-2">
         {toasts.map((t) => (
           <div

@@ -13,6 +13,7 @@ export const Input = React.forwardRef<
         "placeholder:text-muted-foreground",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background",
         "disabled:opacity-50 disabled:pointer-events-none",
+        props["aria-invalid"] && "border-red-300 focus-visible:ring-red-300",
         className
       )}
       {...props}
