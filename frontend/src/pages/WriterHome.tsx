@@ -39,7 +39,7 @@ export default function WriterHome() {
         '/api/v1/content/writer/stories',
         { title, synopsis }
       );
-      nav(`/write/story/${story.id}`);
+      nav(`/write/stories/${story.id}`);
       await loadMyStories();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
@@ -108,7 +108,7 @@ export default function WriterHome() {
               <button
                 type="button"
                 className="border px-3 py-2 rounded"
-                onClick={() => nav(`/write/story/${s.id}`)}
+                onClick={() => nav(`/write/stories/${s.id}`)}
               >
                 Open
               </button>

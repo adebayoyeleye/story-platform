@@ -77,7 +77,7 @@ export default function Home() {
         {stories.map(story => (
           <div key={story.id} className="border p-4 rounded shadow hover:shadow-md transition">
             <h2 className="text-xl font-semibold">
-              <Link to={`/story/${story.id}`} className="text-blue-600 hover:underline">
+              <Link to={`/stories/${story.id}`} className="text-blue-600 hover:underline">
                 {story.title}
               </Link>
             </h2>

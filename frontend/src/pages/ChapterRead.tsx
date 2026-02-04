@@ -39,7 +39,7 @@ export default function ChapterRead() {
   return (
     <div className="p-5 max-w-3xl mx-auto font-serif leading-relaxed">
       <div className="mb-6 text-sm">
-        <Link to={`/story/${chapter.storyId}`} className="text-blue-600 hover:underline">
+        <Link to={`/stories/${chapter.storyId}`} className="text-blue-600 hover:underline">
           ← Back to Story
         </Link>
       </div>

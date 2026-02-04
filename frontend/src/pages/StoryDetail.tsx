@@ -4,7 +4,7 @@ import type { StorySummary, ChapterSummary } from '../types';
 import { apiGet } from '../api';
 
 export default function StoryDetail() {
-  const { id } = useParams(); // Get the ID from the URL
+  const { storyId } = useParams(); // Get the ID from the URL
   const [story, setStory] = useState<StorySummary | null>(null);
   const [chapters, setChapters] = useState<ChapterSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +13,7 @@ export default function StoryDetail() {
   const [chaptersHasNext, setChaptersHasNext] = useState(false);
 
   useEffect(() => {
-  if (!id) return;
+  if (!storyId) return;
   let cancelled = false;
 
   (async() => {
@@ -21,8 +21,8 @@ export default function StoryDetail() {
     setError(null);
 
     try {
-      const storyData = await apiGet<StorySummary>(`/api/v1/content/stories/${id}`);
-      const chaptersData = await apiGet<any>(`/api/v1/content/stories/${id}/chapters?page=${chapterPage}&size=50`);
+      const storyData = await apiGet<StorySummary>(`/api/v1/content/stories/${storyId}`);
+      const chaptersData = await apiGet<any>(`/api/v1/content/stories/${storyId}/chapters?page=${chapterPage}&size=50`);
       if (cancelled) return;
 
       setStory(storyData);
@@ -38,7 +38,7 @@ export default function StoryDetail() {
   })();
 
   return () => { cancelled = true; };
-}, [id, chapterPage]);
+}, [storyId, chapterPage]);
 
   if (loading) return <div className="p-5 max-w-4xl mx-auto">Loading story...</div>;
   if (error) return <div className="p-5 max-w-4xl mx-auto text-red-600">{error}</div>;
