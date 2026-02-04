@@ -12,11 +12,11 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/story/:id" element={<StoryDetail />} />
+        <Route path="/stories/:storyId" element={<StoryDetail />} />
         <Route path="/chapters/:chapterId" element={<ChapterRead />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/write" element={<RequireAuth><WriterHome /></RequireAuth>} />
-        <Route path="/write/story/:storyId" element={<RequireAuth><WriterStory /></RequireAuth>} />
+        <Route path="/write/stories/:storyId" element={<RequireAuth><WriterStory /></RequireAuth>} />
       </Routes>
     </BrowserRouter>
   )
