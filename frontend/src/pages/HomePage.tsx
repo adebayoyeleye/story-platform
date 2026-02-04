@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { StorySummary } from '../types';
-import { apiGet } from '../api';
+import { apiGet } from '@/api/http';
+import { Container } from '@/components/layout/Container';
 
 export default function Home() {
   const [stories, setStories] = useState<StorySummary[]>([]);
@@ -42,11 +43,11 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [page]);
 
-  if (loading) return <div className="p-5 max-w-4xl mx-auto">Loading stories...</div>;
-  if (error) return <div className="p-5 max-w-4xl mx-auto text-red-600">{error}</div>;
+  if (loading) return <Container>Loading stories...</Container>;
+  if (error) return <Container className="text-red-600">{error}</Container>;
 
   return (
-    <div className="p-5 max-w-4xl mx-auto">
+    <Container>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Library 📚</h1>
         <Link to="/write" className="text-blue-600 hover:underline">Writer Mode</Link>
@@ -86,6 +87,6 @@ export default function Home() {
           </div>
         ))}
       </div>
-    </div>
+    </Container>
   );
 }

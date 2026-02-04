@@ -1,4 +1,4 @@
-import { apiGet } from '../api';
+import { apiGet } from '@/api/http';
 import { setTokens, getRefreshToken, clearTokens } from './authStore';
 
 export type AuthResponse = {

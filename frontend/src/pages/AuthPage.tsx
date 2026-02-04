@@ -50,14 +50,12 @@ export default function AuthPage() {
 
       <form onSubmit={onSubmit} className="grid gap-3">
         <Input
-          className="border p-2 rounded"
           placeholder="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
         <Input
-          className="border p-2 rounded"
           placeholder="password"
           type="password"
           value={password}
@@ -65,7 +63,7 @@ export default function AuthPage() {
           required
         />
 
-        <Button className="border px-3 py-2 rounded">
+        <Button variant="secondary" type="submit">
           {mode === 'login' ? 'Login' : 'Create account'}
         </Button>
       </form>

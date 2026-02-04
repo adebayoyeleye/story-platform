@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import type { StorySummary, ChapterSummary } from '../types';
-import { apiGet } from '../api';
+import { apiGet } from '@/api/http';
+import { Container } from '@/components/layout/Container';
 
 export default function StoryDetail() {
   const { storyId } = useParams(); // Get the ID from the URL
@@ -40,12 +41,12 @@ export default function StoryDetail() {
   return () => { cancelled = true; };
 }, [storyId, chapterPage]);
 
-  if (loading) return <div className="p-5 max-w-4xl mx-auto">Loading story...</div>;
-  if (error) return <div className="p-5 max-w-4xl mx-auto text-red-600">{error}</div>;
-  if (!story) return <div className="p-5 max-w-4xl mx-auto">Story not found.</div>;
+  if (loading) return <Container>Loading story...</Container>;
+  if (error) return <Container className="text-red-600">{error}</Container>;
+  if (!story) return <Container>Story not found.</Container>;
 
   return (
-    <div className="p-5 max-w-4xl mx-auto">
+    <Container>
       <Link to="/" className="text-gray-500 hover:underline">← Back to Library</Link>
       <h1 className="text-4xl font-bold mt-4">{story.title}</h1>
       <p className="text-xl text-gray-600 mb-8">By {story.byline}</p>
@@ -86,6 +87,6 @@ export default function StoryDetail() {
         </div>
 
       </div>
-    </div>
+    </Container>
   );
 }

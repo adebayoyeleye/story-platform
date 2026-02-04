@@ -8,10 +8,12 @@ import {
   apiPatchJson,
   ApiError,
   apiDelete
-} from '../api';
+} from '@/api/http';
 import type { StorySummary, ChapterSummary, Chapter, StoryContributor, ContributorRole } from '../types';
 import { apiGetUserByEmail } from '../auth/authApi';
 import { Collapsible } from '@/components/ui/Collapsible';
+import { Button } from '@/components/ui/Button';
+import { Container } from '@/components/layout/Container';
 
 export default function WriterStory() {
   const { storyId } = useParams();
@@ -280,13 +282,13 @@ export default function WriterStory() {
   }
 
 
-  if (!storyId) return <div className="p-5 max-w-4xl mx-auto">Missing story id</div>;
-  if (!story) return <div className="p-5 max-w-4xl mx-auto">Loading...</div>;
+  if (!storyId) return <Container>Missing story id</Container>;
+  if (!story) return <Container>Loading...</Container>;
 
   const canEdit = selectedChapter?.status === 'DRAFT';
 
   return (
-    <div className="p-5 max-w-6xl mx-auto grid gap-6">
+    <Container className="grid gap-6">
       <div className="flex justify-between items-center">
         <div>
           <div className="flex items-center gap-3">
@@ -469,9 +471,9 @@ export default function WriterStory() {
         <div className="border rounded p-4">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-xl font-semibold">Chapters (Writer)</h2>
-            <button className="border px-3 py-2 rounded" onClick={createDraftChapter}>
+            <Button variant="secondary" onClick={createDraftChapter}>
               + New Chapter
-            </button>
+            </Button>
           </div>
 
           {chapters.length === 0 && <div className="text-gray-600">No chapters yet.</div>}
@@ -488,21 +490,21 @@ export default function WriterStory() {
                   </button>
 
                   {ch.status === 'DRAFT' && (
-                    <button className="border px-2 py-1 rounded" onClick={() => publishChapter(ch.id)}>
+                    <Button variant="secondary" onClick={() => publishChapter(ch.id)}>
                       Publish
-                    </button>
+                    </Button>
                   )}
 
                   {ch.status === 'PUBLISHED' && (
-                    <button className="border px-2 py-1 rounded" onClick={() => archiveChapter(ch.id)}>
+                    <Button variant="secondary" onClick={() => archiveChapter(ch.id)}>
                       Archive
-                    </button>
+                    </Button>
                   )}
 
                   {ch.status === 'ARCHIVED' && (
-                    <button className="border px-2 py-1 rounded" onClick={() => restoreChapter(ch.id)}>
+                    <Button variant="secondary" onClick={() => restoreChapter(ch.id)}>
                       Restore
-                    </button>
+                    </Button>
                   )}
                 </div>
               ))}
@@ -565,6 +567,6 @@ export default function WriterStory() {
           )}
         </div>
       </div>
-    </div>
+    </Container>
   );
 }

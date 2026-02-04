@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ApiError, apiGet, apiPost } from '../api';
+import { ApiError, apiGet, apiPost } from '@/api/http';
 import type { StorySummary } from '../types';
+import { Button } from '@/components/ui/Button';
+import { Container } from '@/components/layout/Container';
 
 export default function WriterHome() {
   const nav = useNavigate();
@@ -52,7 +54,7 @@ export default function WriterHome() {
   }
 
   return (
-    <div className="p-5 max-w-3xl mx-auto">
+    <Container>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Writer Mode ✍️</h1>
         <Link to="/" className="text-blue-600 hover:underline">Back to Library</Link>
@@ -78,7 +80,7 @@ export default function WriterHome() {
           rows={4}
         />
         {fieldErrors.synopsis && <div className="text-red-600 text-sm">{fieldErrors.synopsis}</div>}
-        <button className="border px-3 py-2 rounded">Create Story</button>
+        <Button variant="secondary" type="submit">Create Story</Button>
       </form>
 
       <div className="mt-10 border-t pt-6">
@@ -117,6 +119,6 @@ export default function WriterHome() {
         </div>
       </div>
 
-    </div>
+    </Container>
   );
 }

@@ -1,5 +1,5 @@
-import { getAccessToken, clearTokens } from './auth/authStore';
-import { refresh as refreshTokens } from './auth/authApi';
+import { getAccessToken, clearTokens } from '@/auth/authStore';
+import { refresh as refreshTokens } from '@/auth/authApi';
 
 type ApiErrorResponse = {
   timestamp?: string;
