@@ -31,7 +31,7 @@ public class SecurityConfig {
         ).permitAll()
 
         // Writer capability endpoints
-        .requestMatchers("/api/v1/content/writer/**").hasAuthority("ROLE_WRITER")
+        .requestMatchers("/api/v1/content/writer/**").authenticated()
 
         // Future platform admin surface (reserved)
         .requestMatchers("/api/v1/content/admin/**").hasAuthority("ROLE_ADMIN")

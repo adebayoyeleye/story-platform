@@ -2,6 +2,7 @@ package com.audax.auth.service;
 
 import com.audax.auth.domain.User;
 import com.audax.auth.repository.UserRepository;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -25,14 +26,15 @@ public class UserService {
         repo.findByEmail(email).ifPresent(u -> { throw new IllegalArgumentException("Email already exists"); });
 
         // validate roles exist in DB for this appId (no redeploy needed to add roles)
-        roleCatalog.assertRolesExist(appId, roles);
+        var safeRoles = (roles == null) ? List.<String>of() : roles;
+        roleCatalog.assertRolesExist(appId, safeRoles);
 
         User u = new User();
         u.setEmail(email);
         u.setPasswordHash(encoder.encode(rawPassword));
 
         var rolesByApp = new HashMap<String, List<String>>();
-        rolesByApp.put(appId, roles);
+        rolesByApp.put(appId, safeRoles);
         u.setRolesByApp(rolesByApp);
 
         return repo.save(u);
@@ -48,5 +50,15 @@ public class UserService {
 
     public User verifyLoginById(String userId) {
         return repo.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found"));
+    }
+
+    public User lookupByEmail(String email) {
+        var normalizedEmail = email == null ? "" : email.trim();
+        if (normalizedEmail.isEmpty()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+
+        return repo.findByEmailIgnoreCase(normalizedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 }

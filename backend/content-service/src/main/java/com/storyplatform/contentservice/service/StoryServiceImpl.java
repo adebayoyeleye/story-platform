@@ -1,7 +1,10 @@
 package com.storyplatform.contentservice.service;
 
+import com.storyplatform.contentservice.domain.ContributorRole;
 import com.storyplatform.contentservice.domain.Story;
 import com.storyplatform.contentservice.domain.StoryStatus;
+import com.storyplatform.contentservice.dto.UpdateContributorRequestDto;
+import com.storyplatform.contentservice.dto.UpdateStoryMetaRequestDto;
 import com.storyplatform.contentservice.exception.ResourceNotFoundException;
 import com.storyplatform.contentservice.repository.StoryRepository;
 
@@ -10,6 +13,8 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
+import com.storyplatform.contentservice.domain.StoryContributor;
 
 @Service
 public class StoryServiceImpl implements StoryService {
@@ -18,6 +23,38 @@ public class StoryServiceImpl implements StoryService {
 
     public StoryServiceImpl(StoryRepository storyRepository) {
         this.storyRepository = storyRepository;
+    }
+    
+    private void enforcePageSize(Pageable pageable) {
+        if (pageable.getPageSize() > 50) {
+            throw new IllegalArgumentException("Page size cannot exceed 50");
+        }
+    }
+
+    // private helpers
+
+    private boolean isOwner(Story story, String userId) {
+        return story.getContributors().stream()
+                .anyMatch(c -> c.getUserId().equals(userId)
+                        && c.getRole() == ContributorRole.OWNER);
+    }
+
+    private boolean isCoAuthor(Story story, String userId) {
+        return story.getContributors().stream()
+                .anyMatch(c -> c.getUserId().equals(userId)
+                        && c.getRole() == ContributorRole.CO_AUTHOR);
+    }
+
+    private void requireOwner(Story story, String requesterUserId) {
+        if (!isOwner(story, requesterUserId)) {
+            throw new AccessDeniedException("Only OWNER can perform this action");
+        }
+    }
+
+    private void requireOwnerOrCoAuthor(Story story, String requesterUserId) {
+        if (!(isOwner(story, requesterUserId) || isCoAuthor(story, requesterUserId))) {
+            throw new AccessDeniedException("Only OWNER or CO_AUTHOR can perform this action");
+        }
     }
 
     @Override
@@ -85,9 +122,120 @@ public class StoryServiceImpl implements StoryService {
         return storyRepository.findByAuthorId(authorId, pageable);
     }
 
-    private void enforcePageSize(Pageable pageable) {
-        if (pageable.getPageSize() > 50) {
-            throw new IllegalArgumentException("Page size cannot exceed 50");
+    @Override
+    public Story updateStoryMeta(String storyId, String requesterUserId, UpdateStoryMetaRequestDto req) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
+    
+        boolean requesterIsOwner = isOwner(story, requesterUserId);
+        boolean requesterIsCoAuthor = isCoAuthor(story, requesterUserId);
+    
+        if (!(requesterIsOwner || requesterIsCoAuthor)) {
+            throw new AccessDeniedException("Only OWNER or CO_AUTHOR can update story meta");
         }
+    
+        boolean changed = false;
+    
+        if (req.title() != null && !req.title().isBlank()
+                && !req.title().equals(story.getTitle())) {
+            story.setTitle(req.title());
+            changed = true;
+        }
+    
+        if (req.synopsis() != null
+                && !req.synopsis().equals(story.getSynopsis())) {
+            story.setSynopsis(req.synopsis());
+            changed = true;
+        }
+    
+        if (req.ownerPenName() != null) {
+            if (!requesterIsOwner) {
+                throw new AccessDeniedException("Only OWNER can change owner pen name");
+            }
+            StoryContributor owner = story.getContributors().stream()
+                    .filter(c -> c.getUserId().equals(requesterUserId)
+                            && c.getRole() == ContributorRole.OWNER)
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("OWNER contributor not found"));
+    
+            owner.setPenName(req.ownerPenName());
+            changed = true;
+        }
+    
+        if (changed) {
+            story.setByline(BylineBuilder.build(story));
+            return storyRepository.save(story);
+        }
+    
+        return story; // no-op, but safe
+    }
+
+    @Override
+    public Story addContributor(String storyId, String requesterUserId, com.storyplatform.contentservice.dto.AddContributorRequestDto req) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
+
+        // Phase-3-ish rule: only OWNER can manage contributors
+        requireOwner(story, requesterUserId);
+
+        boolean exists = story.getContributors().stream()
+                .anyMatch(c -> c.getUserId().equals(req.userId()));
+        if (exists) {
+            throw new IllegalArgumentException("Contributor already exists");
+        }
+
+        story.getContributors().add(new StoryContributor(
+                req.userId(), req.role(), req.penName()
+        ));
+
+        story.setByline(BylineBuilder.build(story));
+        return storyRepository.save(story);
+    }
+
+    @Override
+    public Story updateContributor(String storyId, String requesterUserId, String contributorUserId, UpdateContributorRequestDto req) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
+
+        requireOwner(story, requesterUserId);
+
+        var contributor = story.getContributors().stream()
+                .filter(c -> c.getUserId().equals(contributorUserId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Contributor not found"));
+
+        // Prevent removing/changing OWNER role accidentally
+        if (contributor.getRole() == ContributorRole.OWNER
+                && req.role() != null
+                && req.role() != ContributorRole.OWNER) {
+            throw new IllegalArgumentException("Cannot change OWNER role");
+        }
+
+        if (req.role() != null) contributor.setRole(req.role());
+        if (req.penName() != null) contributor.setPenName(req.penName());
+
+        story.setByline(BylineBuilder.build(story));
+        return storyRepository.save(story);
+    }
+
+    @Override
+    public Story removeContributor(String storyId, String requesterUserId, String contributorUserId) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found"));
+
+        requireOwner(story, requesterUserId);
+
+        var target = story.getContributors().stream()
+                .filter(c -> c.getUserId().equals(contributorUserId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Contributor not found"));
+
+        if (target.getRole() == ContributorRole.OWNER) {
+            throw new IllegalArgumentException("Cannot remove OWNER");
+        }
+
+        story.getContributors().removeIf(c -> c.getUserId().equals(contributorUserId));
+        story.setByline(BylineBuilder.build(story));
+        return storyRepository.save(story);
     }
 }

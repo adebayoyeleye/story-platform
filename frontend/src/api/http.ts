@@ -1,5 +1,5 @@
-import { getAccessToken, clearTokens } from './auth/authStore';
-import { refresh as refreshTokens } from './auth/authApi';
+import { getAccessToken, clearTokens } from '@/auth/authStore';
+import { refresh as refreshTokens } from '@/auth/authApi';
 
 type ApiErrorResponse = {
   timestamp?: string;
@@ -79,3 +79,4 @@ export const apiPut = <T>(url: string, body: unknown) => request<T>(url, { metho
 export const apiPatchNoContent = (url: string) => request<void>(url, { method: 'PATCH' });
 export const apiPatchJson = <T>(url: string, body?: unknown) =>
   request<T>(url, { method: 'PATCH', body });
+export const apiDelete = <T>(url: string) => request<T>(url, { method: 'DELETE' });

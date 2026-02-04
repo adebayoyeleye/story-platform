@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ApiError, apiGet, apiPost } from '../api';
+import { ApiError, apiGet, apiPost } from '@/api/http';
 import type { StorySummary } from '../types';
+import { Button } from '@/components/ui/Button';
+import { Container } from '@/components/layout/Container';
+import { Field } from '@/components/ui/Field';
+import { Input } from '@/components/ui/Input';
 
 export default function WriterHome() {
   const nav = useNavigate();
@@ -12,22 +16,24 @@ export default function WriterHome() {
   const [loadingMine, setLoadingMine] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  async function loadMyStories() {
-
-    setError(null);
-    setLoadingMine(true);
-
+  const loadMyStories = useCallback(async () => {
+    setError(null)
+    setLoadingMine(true)
     try {
       const page = await apiGet<{ content?: StorySummary[] }>(
         `/api/v1/content/writer/stories?page=0&size=50`
-      );
-      setMyStories(page.content ?? []);
+      )
+      setMyStories(page.content ?? [])
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to load stories');
+      setError(err instanceof Error ? err.message : "Failed to load stories")
     } finally {
-      setLoadingMine(false);
+      setLoadingMine(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    loadMyStories()
+  }, [loadMyStories])
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -39,7 +45,7 @@ export default function WriterHome() {
         '/api/v1/content/writer/stories',
         { title, synopsis }
       );
-      nav(`/write/story/${story.id}`);
+      nav(`/write/stories/${story.id}`);
       await loadMyStories();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
@@ -52,7 +58,7 @@ export default function WriterHome() {
   }
 
   return (
-    <div className="p-5 max-w-3xl mx-auto">
+    <Container>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Writer Mode ✍️</h1>
         <Link to="/" className="text-blue-600 hover:underline">Back to Library</Link>
@@ -61,37 +67,40 @@ export default function WriterHome() {
       {error && <div className="text-red-600 mb-4">{error}</div>}
 
       <form onSubmit={onCreate} className="grid gap-3">
-        <input
-          className="border p-2 rounded"
-          placeholder="Story title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-        {fieldErrors.title && <div className="text-red-600 text-sm">{fieldErrors.title}</div>}
-        
-        <textarea
-          className="border p-2 rounded"
-          placeholder="Synopsis"
-          value={synopsis}
-          onChange={(e) => setSynopsis(e.target.value)}
-          rows={4}
-        />
-        {fieldErrors.synopsis && <div className="text-red-600 text-sm">{fieldErrors.synopsis}</div>}
-        <button className="border px-3 py-2 rounded">Create Story</button>
+        <Field label="Story Title" error={fieldErrors.title}>
+          <Input
+            aria-invalid={!!fieldErrors.title}
+            placeholder="Story title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+          />
+        </Field>
+
+        <Field label="Synopsis" error={fieldErrors.synopsis}>        
+          <textarea
+            className="border p-2 rounded"
+            placeholder="Synopsis"
+            value={synopsis}
+            onChange={(e) => setSynopsis(e.target.value)}
+            rows={4}
+          />
+        </Field>
+
+        <Button variant="secondary" type="submit">Create Story</Button>
       </form>
 
       <div className="mt-10 border-t pt-6">
         <div className="flex justify-between items-center mb-3">
           <h2 className="text-xl font-semibold">My Stories</h2>
-          <button
+          <Button variant="secondary"
             type="button"
             className="border px-3 py-2 rounded disabled:opacity-50"
             onClick={loadMyStories}
             disabled={loadingMine}
           >
             {loadingMine ? 'Loading...' : 'Load'}
-          </button>
+          </Button>
         </div>
 
         {myStories.length === 0 && (
@@ -105,18 +114,18 @@ export default function WriterHome() {
                 <div className="font-medium">{s.title}</div>
                 <div className="text-sm text-gray-600">{s.status}</div>
               </div>
-              <button
+              <Button
                 type="button"
-                className="border px-3 py-2 rounded"
-                onClick={() => nav(`/write/story/${s.id}`)}
+                variant="secondary"
+                onClick={() => nav(`/write/stories/${s.id}`)}
               >
                 Open
-              </button>
+              </Button>
             </div>
           ))}
         </div>
       </div>
 
-    </div>
+    </Container>
   );
 }

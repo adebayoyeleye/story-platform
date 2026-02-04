@@ -1,11 +1,13 @@
 package com.storyplatform.contentservice.dto;
 
 import com.storyplatform.contentservice.domain.StoryStatus;
+import java.util.List;
 
 public record StoryResponseDto(
         String id,
         String title,
-        String authorId,
         String synopsis,
-        StoryStatus status
+        StoryStatus status,
+        String byline,
+        List<StoryContributorDto> contributors // useful for writer UI
 ) {}

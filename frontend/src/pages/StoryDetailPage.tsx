@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import type { StorySummary, ChapterSummary } from '../types';
-import { apiGet } from '../api';
+import { apiGet } from '@/api/http';
+import { Container } from '@/components/layout/Container';
 
 export default function StoryDetail() {
-  const { id } = useParams(); // Get the ID from the URL
+  const { storyId } = useParams(); // Get the ID from the URL
   const [story, setStory] = useState<StorySummary | null>(null);
   const [chapters, setChapters] = useState<ChapterSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -13,7 +14,7 @@ export default function StoryDetail() {
   const [chaptersHasNext, setChaptersHasNext] = useState(false);
 
   useEffect(() => {
-  if (!id) return;
+  if (!storyId) return;
   let cancelled = false;
 
   (async() => {
@@ -21,8 +22,8 @@ export default function StoryDetail() {
     setError(null);
 
     try {
-      const storyData = await apiGet<StorySummary>(`/api/v1/content/stories/${id}`);
-      const chaptersData = await apiGet<any>(`/api/v1/content/stories/${id}/chapters?page=${chapterPage}&size=50`);
+      const storyData = await apiGet<StorySummary>(`/api/v1/content/stories/${storyId}`);
+      const chaptersData = await apiGet<any>(`/api/v1/content/stories/${storyId}/chapters?page=${chapterPage}&size=50`);
       if (cancelled) return;
 
       setStory(storyData);
@@ -38,17 +39,17 @@ export default function StoryDetail() {
   })();
 
   return () => { cancelled = true; };
-}, [id, chapterPage]);
+}, [storyId, chapterPage]);
 
-  if (loading) return <div className="p-5 max-w-4xl mx-auto">Loading story...</div>;
-  if (error) return <div className="p-5 max-w-4xl mx-auto text-red-600">{error}</div>;
-  if (!story) return <div className="p-5 max-w-4xl mx-auto">Story not found.</div>;
+  if (loading) return <Container>Loading story...</Container>;
+  if (error) return <Container className="text-red-600">{error}</Container>;
+  if (!story) return <Container>Story not found.</Container>;
 
   return (
-    <div className="p-5 max-w-4xl mx-auto">
+    <Container>
       <Link to="/" className="text-gray-500 hover:underline">← Back to Library</Link>
       <h1 className="text-4xl font-bold mt-4">{story.title}</h1>
-      <p className="text-xl text-gray-600 mb-8">{story.authorId}</p>
+      <p className="text-xl text-gray-600 mb-8">By {story.byline}</p>
       
       <h3 className="text-2xl font-semibold mb-4">Chapters</h3>
       <div className="space-y-3">
@@ -86,6 +87,6 @@ export default function StoryDetail() {
         </div>
 
       </div>
-    </div>
+    </Container>
   );
 }

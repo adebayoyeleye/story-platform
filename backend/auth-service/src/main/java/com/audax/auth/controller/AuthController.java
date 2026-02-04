@@ -74,4 +74,15 @@ public class AuthController {
                 tokens.issuer()
         );
     }
+
+    @GetMapping("/users/lookup")
+    public UserLookupResponse lookupByEmail(@RequestParam String email) {
+
+        var user = users.lookupByEmail(email);
+        return new UserLookupResponse(
+            user.getId(), 
+            user.getEmail(), 
+            user.getEmail()
+        );
+    }    
 }
