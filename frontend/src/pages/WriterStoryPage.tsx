@@ -57,6 +57,37 @@ export default function WriterStory() {
 
 
 
+  const canEdit = selectedChapter?.status === 'DRAFT';
+
+  // Autosave (debounced)
+  useEffect(() => {
+    if (!selectedChapter) return
+    if (!canEdit) return
+    if (!isDirty) return
+
+    const t = window.setTimeout(async () => {
+      setIsSaving(true)
+      try {
+        await apiPut(`/api/v1/content/writer/chapters/${selectedChapter.id}`, {
+          title: newTitle,
+          content: newContent,
+        })
+        setIsDirty(false)
+      } catch (err: unknown) {
+          if (err instanceof ApiError) {
+            setError(err.message)
+            setFieldErrors(err.fieldErrors)
+          } else {
+            setError(err instanceof Error ? err.message : "Autosave failed")
+          }
+          toast.push({ title: "Autosave failed", kind: "error" })
+        } finally {
+        setIsSaving(false)
+      }
+    }, 900)
+
+    return () => window.clearTimeout(t)
+  }, [selectedChapter?.id, newTitle, newContent, canEdit, isDirty])
 
   const nextChapterNumber = useMemo(() => {
     if (chapters.length === 0) return 1;
@@ -331,38 +362,6 @@ export default function WriterStory() {
 
   if (!storyId) return <Container>Missing story id</Container>;
   if (!story) return <Container>Loading...</Container>;
-
-  const canEdit = selectedChapter?.status === 'DRAFT';
-
-  // Autosave (debounced)
-  useEffect(() => {
-    if (!selectedChapter) return
-    if (!canEdit) return
-    if (!isDirty) return
-
-    const t = window.setTimeout(async () => {
-      setIsSaving(true)
-      try {
-        await apiPut(`/api/v1/content/writer/chapters/${selectedChapter.id}`, {
-          title: newTitle,
-          content: newContent,
-        })
-        setIsDirty(false)
-      } catch (err: unknown) {
-          if (err instanceof ApiError) {
-            setError(err.message)
-            setFieldErrors(err.fieldErrors)
-          } else {
-            setError(err instanceof Error ? err.message : "Autosave failed")
-          }
-          toast.push({ title: "Autosave failed", kind: "error" })
-        } finally {
-        setIsSaving(false)
-      }
-    }, 900)
-
-    return () => window.clearTimeout(t)
-  }, [selectedChapter?.id, newTitle, newContent, canEdit, isDirty])
 
 
   return (
