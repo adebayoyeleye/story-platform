@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { login, signup } from '../auth/authApi';
 import { clearTokens } from '../auth/authStore';
+import { Input } from "../components/ui/Input";
+import { Button } from "../components/ui/Button";
 
 export default function AuthPage() {
   const nav = useNavigate();
@@ -47,14 +49,14 @@ export default function AuthPage() {
       {error && <div className="text-red-600">{error}</div>}
 
       <form onSubmit={onSubmit} className="grid gap-3">
-        <input
+        <Input
           className="border p-2 rounded"
           placeholder="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <input
+        <Input
           className="border p-2 rounded"
           placeholder="password"
           type="password"
@@ -63,9 +65,9 @@ export default function AuthPage() {
           required
         />
 
-        <button className="border px-3 py-2 rounded">
+        <Button className="border px-3 py-2 rounded">
           {mode === 'login' ? 'Login' : 'Create account'}
-        </button>
+        </Button>
       </form>
 
       <div className="flex gap-3 items-center">
