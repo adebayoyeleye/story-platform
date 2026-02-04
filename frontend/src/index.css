@@ -81,3 +81,14 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 }
+
+@layer components {
+  .container-app {
+    @apply mx-auto w-full max-w-5xl px-4;
+  }
+
+  .reading-width {
+    @apply mx-auto w-full max-w-2xl px-4;
+  }
+}
+
