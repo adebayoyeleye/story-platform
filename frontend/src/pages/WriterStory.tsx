@@ -11,6 +11,7 @@ import {
 } from '../api';
 import type { StorySummary, ChapterSummary, Chapter, StoryContributor, ContributorRole } from '../types';
 import { apiGetUserByEmail } from '../auth/authApi';
+import { Collapsible } from '@/components/ui/Collapsible';
 
 export default function WriterStory() {
   const { storyId } = useParams();
@@ -319,7 +320,7 @@ export default function WriterStory() {
       </div>
 
       {/* Story meta editing */}
-      <section className="border rounded p-4 space-y-3">
+      <Collapsible title="Story Settings" description="Title, synopsis, and public byline">
         <h1 className="text-2xl font-semibold">Story Settings</h1>
         <div>
           <label className="block text-sm font-medium mb-1">Title</label>
@@ -364,7 +365,7 @@ export default function WriterStory() {
         <p className="text-xs text-gray-600 mt-2">
           Public byline: <span className="font-medium">{story.byline ?? '—'}</span>
         </p>
-      </section>
+      </Collapsible>
 
       {/* Contributors panel */}
       <section className="border rounded p-4 space-y-4">
@@ -418,7 +419,7 @@ export default function WriterStory() {
         </div>
 
         {/* Add contributor form (EMAIL-based) */}
-        <div className="border-t pt-4 space-y-2">
+        <Collapsible title="Add contributor" description="Invite co-authors and editors">
           <h3 className="text-sm font-semibold">Add contributor</h3>
 
           <div>
@@ -460,7 +461,7 @@ export default function WriterStory() {
           >
             {isAddingContributor ? 'Adding…' : 'Add contributor'}
           </button>
-        </div>
+        </Collapsible>
       </section>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -556,7 +557,7 @@ export default function WriterStory() {
                   Save Draft
                 </button>
 
-                <Link className="border px-3 py-2 rounded" to={`/story/${storyId}`}>
+                <Link className="border px-3 py-2 rounded" to={`/stories/${storyId}`}>
                   View Public Story
                 </Link>
               </div>
