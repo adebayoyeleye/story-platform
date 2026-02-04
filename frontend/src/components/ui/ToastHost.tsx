@@ -15,6 +15,15 @@ export function useToast() {
   return ctx
 }
 
+function makeId() {
+  // Works in secure contexts (https, localhost)
+  if (typeof globalThis.crypto?.randomUUID === "function") {
+    return globalThis.crypto.randomUUID()
+  }
+  // Works everywhere (http remote, older browsers)
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
 type ToastHostProps = {
   children: React.ReactNode
 }
@@ -23,7 +32,7 @@ export function ToastHost({ children }: ToastHostProps) {
   const [toasts, setToasts] = React.useState<Toast[]>([])
 
   const push = React.useCallback((t: Omit<Toast, "id">) => {
-    const id = crypto.randomUUID()
+    const id = makeId();
     const toast: Toast = { id, ...t }
     setToasts((prev) => [toast, ...prev].slice(0, 3))
     window.setTimeout(() => {
