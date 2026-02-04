@@ -13,7 +13,11 @@ import type { StorySummary, ChapterSummary, Chapter, StoryContributor, Contribut
 import { apiGetUserByEmail } from '../auth/authApi';
 import { Collapsible } from '@/components/ui/Collapsible';
 import { Button } from '@/components/ui/Button';
-import { Container } from '@/components/layout/Container';
+import { Container } from "@/components/layout/Container"
+import { useToast } from "@/components/ui/ToastHost"
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
+import { Input } from "@/components/ui/Input"
+
 
 export default function WriterStory() {
   const { storyId } = useParams();
@@ -40,6 +44,15 @@ export default function WriterStory() {
   // contributors
   const [newContributorEmail, setNewContributorEmail] = useState('');
   const [isAddingContributor, setIsAddingContributor] = useState(false);
+
+  const toast = useToast()
+
+  const [isSaving, setIsSaving] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingChapterId, setPendingChapterId] = useState<string | null>(null)
+
 
 
 
@@ -108,24 +121,47 @@ export default function WriterStory() {
     }
   }
 
+  function requestOpenChapter(id: string) {
+    if (isDirty && canEdit) {
+      setPendingChapterId(id)
+      setConfirmOpen(true)
+      return
+    }
+    openChapter(id)
+  }
+
+
   async function saveDraft() {
     if (!selectedChapter) return;
+
     setError(null);
     setFieldErrors({});
+    setIsSaving(true);
+
     try {
-      const updated = await apiPut<Chapter>(`/api/v1/content/writer/chapters/${selectedChapter.id}`, {
-        title: newTitle,
-        content: newContent
-      });
+      const updated = await apiPut<Chapter>(
+        `/api/v1/content/writer/chapters/${selectedChapter.id}`,
+        { title: newTitle, content: newContent }
+      );
+
       setSelectedChapter(updated);
+
+      // ✅ manual save = same UX feedback as autosave
+      setIsDirty(false);
+      toast.push({ title: "Saved", kind: "success" });
+
+      // Optional: refresh chapter list/statuses etc.
       await refresh();
     } catch (err: unknown) {
       if (err instanceof ApiError) {
         setError(err.message);
         setFieldErrors(err.fieldErrors);
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to save');
+        setError(err instanceof Error ? err.message : "Failed to save");
       }
+      toast.push({ title: "Save failed", kind: "error" });
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -286,6 +322,32 @@ export default function WriterStory() {
   if (!story) return <Container>Loading...</Container>;
 
   const canEdit = selectedChapter?.status === 'DRAFT';
+
+  // Autosave (debounced)
+  useEffect(() => {
+    if (!selectedChapter) return
+    if (!canEdit) return
+    if (!isDirty) return
+
+    const t = window.setTimeout(async () => {
+      setIsSaving(true)
+      try {
+        await apiPut(`/api/v1/content/writer/chapters/${selectedChapter.id}`, {
+          title: newTitle,
+          content: newContent,
+        })
+        setIsDirty(false)
+        toast.push({ title: "Saved", kind: "success" })
+      } catch {
+        toast.push({ title: "Autosave failed", kind: "error" })
+      } finally {
+        setIsSaving(false)
+      }
+    }, 900)
+
+    return () => window.clearTimeout(t)
+  }, [selectedChapter?.id, newTitle, newContent, canEdit, isDirty])
+
 
   return (
     <Container className="grid gap-6">
@@ -484,7 +546,7 @@ export default function WriterStory() {
               .sort((a, b) => a.chapterNumber - b.chapterNumber)
               .map(ch => (
                 <div key={ch.id} className="border rounded p-2 flex justify-between items-center">
-                  <button className="text-left" onClick={() => openChapter(ch.id)}>
+                  <button className="text-left" onClick={() => requestOpenChapter(ch.id)}>
                     <div className="font-medium">Chapter {ch.chapterNumber}: {ch.title}</div>
                     <div className="text-sm text-gray-600">Status: {ch.status}</div>
                   </button>
@@ -516,8 +578,12 @@ export default function WriterStory() {
           <h2 className="text-xl font-semibold mb-3">Editor</h2>
 
           {!selectedChapter && (
-            <div className="text-gray-600">
-              Select a chapter to edit, or create a new one.
+            <div className="rounded-md border bg-muted/40 p-4 text-sm text-muted-foreground">
+              <div className="font-medium text-foreground">No chapter selected</div>
+              <div className="mt-1">Pick a chapter on the left, or create a new one.</div>
+              <div className="mt-3">
+                <Button variant="secondary" onClick={createDraftChapter}>+ New Chapter</Button>
+              </div>
             </div>
           )}
 
@@ -533,40 +599,58 @@ export default function WriterStory() {
                 </div>
               )}
 
-              <input
-                className="border p-2 rounded"
+              <Input
                 value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
+                onChange={(e) => { setNewTitle(e.target.value); setIsDirty(true) }}
                 disabled={!canEdit}
               />
               {fieldErrors.title && <div className="text-red-600 text-sm">{fieldErrors.title}</div>}
 
               <textarea
-                className="border p-2 rounded"
-                rows={12}
+                className="min-h-[320px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
+                onChange={(e) => { setNewContent(e.target.value); setIsDirty(true) }}
                 disabled={!canEdit}
               />
               {fieldErrors.content && <div className="text-red-600 text-sm">{fieldErrors.content}</div>}
 
-              <div className="flex gap-3">
-                <button
-                  className="border px-3 py-2 rounded disabled:opacity-50"
-                  onClick={saveDraft}
-                  disabled={!canEdit}
-                >
-                  Save Draft
-                </button>
+              <div className="sticky bottom-0 -mx-4 border-t bg-card px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-xs text-muted-foreground">
+                    {isSaving ? "Saving…" : isDirty ? "Unsaved changes" : "All changes saved"}
+                  </div>
 
-                <Link className="border px-3 py-2 rounded" to={`/stories/${storyId}`}>
-                  View Public Story
-                </Link>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" onClick={saveDraft} disabled={!canEdit || isSaving}>
+                      Save Draft
+                    </Button>
+                    <Link to={`/stories/${storyId}`}>
+                      <Button variant="ghost" type="button">View Public</Button>
+                    </Link>
+                  </div>
+                </div>
               </div>
+
             </div>
           )}
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Discard unsaved changes?"
+        description="You have unsaved edits. Continue to switch chapters and lose those changes?"
+        confirmText="Discard and continue"
+        cancelText="Stay"
+        onCancel={() => { setConfirmOpen(false); setPendingChapterId(null) }}
+        onConfirm={() => {
+          setConfirmOpen(false)
+          setIsDirty(false)
+          if (pendingChapterId) openChapter(pendingChapterId)
+          setPendingChapterId(null)
+        }}
+      />
     </Container>
   );
 }
