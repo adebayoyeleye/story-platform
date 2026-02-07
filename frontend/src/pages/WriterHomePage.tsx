@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Container } from '@/components/layout/Container';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
+import { Textarea } from '@/components/ui/Textarea';
 
 export default function WriterHome() {
   const nav = useNavigate();
@@ -77,9 +78,9 @@ export default function WriterHome() {
           />
         </Field>
 
-        <Field label="Synopsis" error={fieldErrors.synopsis}>        
-          <textarea
-            className="border p-2 rounded"
+        <Field label="Synopsis" error={fieldErrors.synopsis}>
+          <Textarea
+            aria-invalid={!!fieldErrors.synopsis}
             placeholder="Synopsis"
             value={synopsis}
             onChange={(e) => setSynopsis(e.target.value)}

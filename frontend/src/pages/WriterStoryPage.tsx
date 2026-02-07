@@ -18,6 +18,7 @@ import { useToast } from "@/components/ui/ToastHost"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { Input } from "@/components/ui/Input"
 import { Field } from '@/components/ui/Field';
+import { Textarea } from '@/components/ui/Textarea';
 
 
 export default function WriterStory() {
@@ -413,8 +414,8 @@ export default function WriterStory() {
 
         <div>
           <Field label="Synopsis" error={fieldErrors.synopsis}>
-            <textarea
-              className="border rounded w-full px-3 py-2 min-h-[100px]"
+            <Textarea
+              aria-invalid={!!fieldErrors.synopsis}
               value={editSynopsis}
               onChange={(e) => setEditSynopsis(e.target.value)}
             />
@@ -630,8 +631,9 @@ export default function WriterStory() {
               </Field>
 
               <Field label="Chapter Content" error={fieldErrors.content}>
-                <textarea
-                  className="min-h-[320px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                <Textarea
+                  aria-invalid={!!fieldErrors.content}
+                  className="min-h-[320px]"
                   value={newContent}
                   onChange={(e) => { setNewContent(e.target.value); setIsDirty(true) }}
                   disabled={!canEdit}
