@@ -4,6 +4,7 @@ import { apiGet } from "@/api/http"
 import type { StorySummary, ChapterSummary } from "@/types"
 import { Container } from "@/components/layout/Container"
 import { Button } from "@/components/ui/Button"
+import { clearContinueReading, getContinueReading } from "@/features/reader/continueReading"
 
 export default function StoryDetailPage() {
   const { storyId } = useParams()
@@ -13,6 +14,19 @@ export default function StoryDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [chapterPage, setChapterPage] = useState(0)
   const [chaptersHasNext, setChaptersHasNext] = useState(false)
+
+  const [continueReading, setContinueReadingState] = useState<ReturnType<typeof getContinueReading>>(null)
+
+  useEffect(() => {
+    if (!storyId) return
+    setContinueReadingState(getContinueReading(storyId))
+  }, [storyId, chapterPage, story?.id]) // safe: refresh when story loads / page changes
+
+  const firstChapter = useMemo(() => {
+    if (!chapters?.length) return null
+    return chapters.slice().sort((a, b) => a.chapterNumber - b.chapterNumber)[0]
+  }, [chapters])
+    
 
   useEffect(() => {
     if (!storyId) return
@@ -50,7 +64,7 @@ export default function StoryDetailPage() {
     return chapters.slice().sort((a, b) => a.chapterNumber - b.chapterNumber)
   }, [chapters])
 
-  const firstChapter = sortedChapters[0]
+  // const firstChapter = sortedChapters[0]
 
   if (loading) return <Container>Loading story…</Container>
   if (error) return <Container className="text-red-600">{error}</Container>
@@ -63,13 +77,45 @@ export default function StoryDetailPage() {
           ← Back to Library
         </Link>
 
-        {firstChapter && (
+        {/* {firstChapter && (
           <Link to={`/chapters/${firstChapter.id}`}>
             <Button variant="secondary" type="button">
               Start reading
             </Button>
           </Link>
-        )}
+        )} */}
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {continueReading?.chapterId ? (
+            <>
+              <Link to={`/chapters/${continueReading.chapterId}`}>
+                <Button variant="secondary" type="button">
+                  Continue reading
+                  {continueReading.chapterTitle ? `: ${continueReading.chapterTitle}` : ""}
+                </Button>
+              </Link>
+
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => {
+                  if (!storyId) return
+                  clearContinueReading(storyId)
+                  setContinueReadingState(null)
+                }}
+              >
+                Clear
+              </Button>
+            </>
+          ) : (
+            <Link to={firstChapter ? `/chapters/${firstChapter.id}` : "#"}>
+              <Button variant="secondary" type="button" disabled={!firstChapter}>
+                {firstChapter ? "Start reading" : "No chapters yet"}
+              </Button>
+            </Link>
+          )}
+        </div>
+
       </div>
 
       {/* Header */}
