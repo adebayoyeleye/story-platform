@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom"
 import type { Chapter, StorySummary } from "@/types"
 import { apiGet } from "@/api/http"
 import { Container } from "@/components/layout/Container"
+import { setContinueReading } from "@/features/reader/continueReading"
 
 export default function ChapterReadPage() {
   const { chapterId } = useParams()
@@ -22,6 +23,13 @@ export default function ChapterReadPage() {
         const data = await apiGet<Chapter>(`/api/v1/content/chapters/${chapterId}`)
         if (cancelled) return
         setChapter(data)
+
+        // ✅ continue reading (Phase 2): store last read chapter for that story
+        setContinueReading(data.storyId, {
+          chapterId: data.id,
+          chapterNumber: (data as any).chapterNumber,
+          chapterTitle: data.title,
+        })
       } catch (e: unknown) {
         if (cancelled) return
         setError(e instanceof Error ? e.message : "Failed to load chapter")
