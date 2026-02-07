@@ -507,9 +507,9 @@ export default function WriterStory() {
           <h3 className="text-sm font-semibold">Add contributor</h3>
 
           <div>
-            <Field label="Contributor email" error={fieldErrors.newContributorEmail}>
+            <Field label="Contributor email" error={fieldErrors.userEmail}>
               <Input
-                aria-invalid={!!fieldErrors.newContributorEmail}
+                aria-invalid={!!fieldErrors.userEmail}
                 placeholder="user@example.com"
                 value={newContributorEmail}
                 onChange={(e) => setNewContributorEmail(e.target.value)}
@@ -518,9 +518,9 @@ export default function WriterStory() {
           </div>
 
           <div>
-            <Field label="Pen name" error={fieldErrors.newContributorPenName}>
+            <Field label="Pen name" error={fieldErrors.penName}>
               <Input
-                aria-invalid={!!fieldErrors.newContributorPenName}
+                aria-invalid={!!fieldErrors.penName}
                 placeholder="Used in byline if set"
                 value={newContributorPenName}
                 onChange={(e) => setNewContributorPenName(e.target.value)}
@@ -529,7 +529,7 @@ export default function WriterStory() {
           </div>
 
           <div>
-            <Field label='Role' error={fieldErrors.newContributorRole}>
+            <Field label='Role' error={fieldErrors.role}>
               <select
                 className="border rounded px-3 py-2 text-sm"
                 value={newContributorRole}
