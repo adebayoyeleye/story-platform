@@ -14,3 +14,8 @@ target/
 .idea/
 .vscode/
 .DS_Store
+
+# ssl certs
+ssl/
+*.pem
+*.key
