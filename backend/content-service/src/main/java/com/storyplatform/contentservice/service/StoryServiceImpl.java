@@ -51,11 +51,11 @@ public class StoryServiceImpl implements StoryService {
         }
     }
 
-    private void requireOwnerOrCoAuthor(Story story, String requesterUserId) {
+    /* private void requireOwnerOrCoAuthor(Story story, String requesterUserId) {
         if (!(isOwner(story, requesterUserId) || isCoAuthor(story, requesterUserId))) {
             throw new AccessDeniedException("Only OWNER or CO_AUTHOR can perform this action");
         }
-    }
+    } */
 
     @Override
     public Story create(Story story) {

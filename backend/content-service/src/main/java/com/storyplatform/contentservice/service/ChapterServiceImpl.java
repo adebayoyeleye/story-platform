@@ -1,9 +1,11 @@
 package com.storyplatform.contentservice.service;
 
+import com.storyplatform.contentservice.config.ChapterProperties;
 import com.storyplatform.contentservice.domain.Chapter;
 import com.storyplatform.contentservice.domain.ChapterStatus;
 import com.storyplatform.contentservice.domain.Story;
 import com.storyplatform.contentservice.domain.StoryStatus;
+import com.storyplatform.contentservice.domain.ContentFormat;
 import com.storyplatform.contentservice.exception.ResourceNotFoundException;
 import com.storyplatform.contentservice.repository.ChapterRepository;
 import com.storyplatform.contentservice.repository.StoryRepository;
@@ -19,14 +21,21 @@ public class ChapterServiceImpl implements ChapterService {
 
     private final ChapterRepository chapterRepository;
     private final StoryRepository storyRepository;
+    private final ChapterProperties chapterProperties;
 
-    public ChapterServiceImpl(ChapterRepository chapterRepository, StoryRepository storyRepository) {
+    public ChapterServiceImpl(
+            ChapterRepository chapterRepository,
+            StoryRepository storyRepository,
+            ChapterProperties chapterProperties
+    ) {
         this.chapterRepository = chapterRepository;
         this.storyRepository = storyRepository;
+        this.chapterProperties = chapterProperties;
     }
 
     @Override
     public Chapter createChapter(Chapter chapter) {
+        validateChapterContent(chapter.getTitle(), chapter.getContent());
         return chapterRepository.save(chapter);
     }
 
@@ -59,16 +68,22 @@ public class ChapterServiceImpl implements ChapterService {
     }
 
     @Override
-    public Chapter updateDraftContent(String chapterId, String title, String content) {
-        Chapter chapter = chapterRepository.findById(chapterId)
-                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
+    public Chapter updateDraftContent(
+            String chapterId,
+            String title,
+            String content,
+            ContentFormat contentFormat
+    ) {
+        Chapter chapter = getDraftableById(chapterId);
 
         if (chapter.getStatus() != ChapterStatus.DRAFT) {
-            throw new IllegalArgumentException("Only DRAFT chapters can be edited");
+            throw new IllegalStateException("Only DRAFT chapters can be edited");
         }
-
+        validateChapterContent(title, content);
         chapter.setTitle(title);
         chapter.setContent(content);
+        chapter.setContentFormat(contentFormat);
+
         return chapterRepository.save(chapter);
     }
 
@@ -149,6 +164,21 @@ public class ChapterServiceImpl implements ChapterService {
     public Chapter getDraftableById(String chapterId) {
         return chapterRepository.findById(chapterId)
             .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
+    }
+
+    private void validateChapterContent(String title, String content) {
+
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Chapter title is required");
+        }
+
+        if (title.length() > chapterProperties.getTitleMaxLength()) {
+            throw new IllegalArgumentException("Chapter title exceeds max length");
+        }
+
+        if (content != null && content.length() > chapterProperties.getMaxLength()) {
+            throw new IllegalArgumentException("Chapter content exceeds max length");
+        }
     }
 
 }

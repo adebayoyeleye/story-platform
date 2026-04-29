@@ -2,6 +2,7 @@ package com.storyplatform.contentservice.controller;
 
 import com.storyplatform.contentservice.domain.Chapter;
 import com.storyplatform.contentservice.domain.ChapterStatus;
+import com.storyplatform.contentservice.domain.ContentFormat;
 import com.storyplatform.contentservice.dto.ChapterRequestDto;
 import com.storyplatform.contentservice.dto.ChapterResponseDto;
 import com.storyplatform.contentservice.dto.ChapterSummaryResponseDto;
@@ -57,16 +58,19 @@ public class ChapterController {
             @PathVariable String storyId,
             @Valid @RequestBody ChapterRequestDto request
     ) {
+        ContentFormat format =
+                request.contentFormat() == null ? ContentFormat.PLAIN_TEXT : request.contentFormat();
+
         Chapter chapter = new Chapter(
                 storyId,
                 request.title(),
                 request.content(),
+                format,
                 request.chapterNumber(),
                 ChapterStatus.DRAFT
         );
 
         Chapter saved = chapterService.createChapter(chapter);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
     }
 
@@ -80,6 +84,7 @@ public class ChapterController {
                 storyId,
                 request.title(),
                 request.content(),
+                request.contentFormat() == null ? ContentFormat.RICH_TEXT_HTML : request.contentFormat(),
                 position,
                 ChapterStatus.DRAFT
         );
@@ -94,7 +99,16 @@ public class ChapterController {
             @PathVariable String chapterId,
             @Valid @RequestBody ChapterUpdateRequestDto request
     ) {
-        Chapter updated = chapterService.updateDraftContent(chapterId, request.title(), request.content());
+        ContentFormat format =
+                request.contentFormat() == null ? ContentFormat.PLAIN_TEXT : request.contentFormat();
+    
+        Chapter updated = chapterService.updateDraftContent(
+                chapterId,
+                request.title(),
+                request.content(),
+                format
+        );
+    
         return ResponseEntity.ok(toResponse(updated));
     }
 
@@ -131,6 +145,7 @@ public class ChapterController {
                 chapter.getStoryId(),
                 chapter.getTitle(),
                 chapter.getContent(),
+                chapter.getContentFormat(),
                 chapter.getChapterNumber(),
                 chapter.getStatus()
         );

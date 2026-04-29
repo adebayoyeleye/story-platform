@@ -2,6 +2,7 @@ package com.storyplatform.contentservice.service;
 
 import com.storyplatform.contentservice.domain.Chapter;
 import com.storyplatform.contentservice.domain.ChapterStatus;
+import com.storyplatform.contentservice.domain.ContentFormat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -11,7 +12,7 @@ public interface ChapterService {
 
     Chapter insertChapter(String storyId, Chapter chapter, int position);
 
-    Chapter updateDraftContent(String chapterId, String title, String content);
+    Chapter updateDraftContent(String chapterId, String title, String content, ContentFormat contentFormat);
 
     Chapter updateStatus(String chapterId, ChapterStatus status);
 

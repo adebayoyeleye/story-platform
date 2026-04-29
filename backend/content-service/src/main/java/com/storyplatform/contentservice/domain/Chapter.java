@@ -22,6 +22,7 @@ public class Chapter {
     private String storyId;
     private String title;
     private String content;
+    private ContentFormat contentFormat;
     private int chapterNumber;
     private ChapterStatus status;
 
@@ -34,12 +35,14 @@ public class Chapter {
             String storyId,
             String title,
             String content,
+            ContentFormat contentFormat,
             int chapterNumber,
             ChapterStatus status
     ) {
         this.storyId = storyId;
         this.title = title;
         this.content = content;
+        this.contentFormat = contentFormat == null ? ContentFormat.PLAIN_TEXT : contentFormat;
         this.chapterNumber = chapterNumber;
         this.status = status;
         this.createdAt = Instant.now();
@@ -51,6 +54,9 @@ public class Chapter {
     public String getStoryId() { return storyId; }
     public String getTitle() { return title; }
     public String getContent() { return content; }
+    public ContentFormat getContentFormat() {
+        return contentFormat == null ? ContentFormat.PLAIN_TEXT : contentFormat;
+    }
     public int getChapterNumber() { return chapterNumber; }
     public ChapterStatus getStatus() { return status; }
     public Instant getCreatedAt() { return createdAt; }
@@ -74,6 +80,11 @@ public class Chapter {
 
     public void setContent(String content2) {
         this.content = content2;
+        this.updatedAt = Instant.now();
+    }
+
+    public void setContentFormat(ContentFormat contentFormat) {
+        this.contentFormat = contentFormat == null ? ContentFormat.PLAIN_TEXT : contentFormat;
         this.updatedAt = Instant.now();
     }
 }

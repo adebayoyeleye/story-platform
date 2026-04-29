@@ -28,4 +28,9 @@ info:
   app:
     name: Story Platform
     description: Backend for content service
-    version: 1.0.0      
+    version: 1.0.0
+
+story:
+  chapter:
+    max-length: 50000
+    title-max-length: 200
