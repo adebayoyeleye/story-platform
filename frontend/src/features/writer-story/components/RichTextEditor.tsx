@@ -44,7 +44,7 @@ export function RichTextEditor({ value, onChange, disabled = false }: Props) {
     if (!editor) return
     const next = value || EMPTY_DOC
     if (editor.getHTML() !== next) {
-      editor.commands.setContent(next, false)
+      editor.commands.setContent(next, { emitUpdate: false })
     }
   }, [editor, value])
 

@@ -3,7 +3,7 @@ import type { Chapter } from "@/types"
 import { Button } from "@/components/ui/Button"
 import { Field } from "@/components/ui/Field"
 import { Input } from "@/components/ui/Input"
-import { Textarea } from "@/components/ui/Textarea"
+// import { Textarea } from "@/components/ui/Textarea"
 import { RichTextEditor } from "./RichTextEditor"
 
 type Props = {
