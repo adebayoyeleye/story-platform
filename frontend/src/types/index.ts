@@ -1,5 +1,6 @@
 export type StoryStatus = 'DRAFT' | 'ONGOING' | 'COMPLETED' | 'ARCHIVED';
 export type ChapterStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+export type ContentFormat = 'PLAIN_TEXT' | 'RICH_TEXT_HTML';
 
 export type ContributorRole = 'OWNER' | 'CO_AUTHOR' | 'EDITOR';
 
@@ -31,6 +32,7 @@ export type Chapter = {
   storyId: string;
   title: string;
   content: string;
+  contentFormat: ContentFormat;
   chapterNumber: number;
   status: ChapterStatus;
 };

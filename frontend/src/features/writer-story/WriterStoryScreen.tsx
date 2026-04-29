@@ -26,6 +26,7 @@ import { StorySettingsPanel } from "./components/StorySettingsPanel"
 import { ContributorsPanel } from "./components/ContributorsPanel"
 import { ChapterListPanel } from "./components/ChapterListPanel"
 import { ChapterEditorPanel } from "./components/ChapterEditorPanel"
+import { toEditorHtml } from "./components/editorContent"
 
 export function WriterStoryScreen() {
   const { storyId } = useParams()
@@ -110,7 +111,7 @@ export function WriterStoryScreen() {
       )
       setSelectedChapter(full)
       setNewTitle(full.title)
-      setNewContent(full.content)
+      setNewContent(toEditorHtml(full.content, full.contentFormat))
       setIsDirty(false)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load chapter")
@@ -134,6 +135,8 @@ export function WriterStoryScreen() {
       await apiPost(`/api/v1/content/writer/stories/${storyId}/chapters`, {
         title: `Chapter ${nextChapterNumber}`,
         content: "",
+        // content: newContent || "<p></p>",
+        contentFormat: "RICH_TEXT_HTML",
         chapterNumber: nextChapterNumber,
       })
       toast.push({ title: "Chapter created", kind: "success" })
@@ -159,7 +162,7 @@ export function WriterStoryScreen() {
     try {
       const updated = await apiPut<Chapter>(
         `/api/v1/content/writer/chapters/${selectedChapter.id}`,
-        { title: newTitle, content: newContent }
+        { title: newTitle, content: newContent, contentFormat: "RICH_TEXT_HTML" }
       )
 
       setSelectedChapter(updated)
@@ -382,6 +385,7 @@ export function WriterStoryScreen() {
         await apiPut(`/api/v1/content/writer/chapters/${selectedChapter.id}`, {
           title: newTitle,
           content: newContent,
+          contentFormat: "RICH_TEXT_HTML",
         })
         setIsDirty(false)
         toast.push({ title: "Saved", kind: "success" })

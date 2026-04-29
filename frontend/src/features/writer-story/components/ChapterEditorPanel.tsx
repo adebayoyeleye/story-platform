@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/Button"
 import { Field } from "@/components/ui/Field"
 import { Input } from "@/components/ui/Input"
 import { Textarea } from "@/components/ui/Textarea"
+import { RichTextEditor } from "./RichTextEditor"
 
 type Props = {
   storyId: string
@@ -73,12 +74,19 @@ export function ChapterEditorPanel({
             />
           </Field>
 
-          <Field label="Chapter Content" error={fieldErrors.content}>
+          {/* <Field label="Chapter Content" error={fieldErrors.content}>
             <Textarea
               aria-invalid={!!fieldErrors.content}
               className="min-h-[320px]"
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
+              disabled={!canEdit}
+            />
+          </Field> */}
+          <Field label="Chapter Content" error={fieldErrors.content}>
+            <RichTextEditor
+              value={newContent}
+              onChange={setNewContent}
               disabled={!canEdit}
             />
           </Field>

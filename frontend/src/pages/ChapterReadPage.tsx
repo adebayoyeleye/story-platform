@@ -6,6 +6,7 @@ import { Container } from "@/components/layout/Container"
 import { Button } from "@/components/ui/Button"
 import { useToast } from "@/components/ui/ToastHost"
 import { setContinueReading } from "@/features/reader/continueReading"
+import { RichTextContent } from "@/features/reader/components/RichTextContent"
 
 type Nav = { prev?: ChapterSummary; next?: ChapterSummary }
 
@@ -134,8 +135,17 @@ export default function ChapterReadPage() {
         </div>
 
         {/* IMPORTANT: remove font-serif to match the rest of the app */}
-        <div className="mt-3 whitespace-pre-wrap text-base leading-7 text-foreground">
+        {/* <div className="mt-3 whitespace-pre-wrap text-base leading-7 text-foreground">
           {chapter.content}
+        </div> */}
+        <div className="mt-3">
+          {chapter.contentFormat === "RICH_TEXT_HTML" ? (
+            <RichTextContent html={chapter.content} />
+          ) : (
+            <div className="whitespace-pre-wrap text-base leading-7 text-foreground">
+              {chapter.content}
+            </div>
+          )}
         </div>
       </div>
 

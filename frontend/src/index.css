@@ -92,3 +92,21 @@
   }
 }
 
+@layer components {
+  .story-richtext p {
+    @apply mb-4;
+  }
+
+  .story-richtext p:last-child {
+    @apply mb-0;
+  }
+
+  .story-richtext strong {
+    @apply font-semibold;
+  }
+
+  .story-richtext em {
+    font-style: italic;
+  }
+}
+
