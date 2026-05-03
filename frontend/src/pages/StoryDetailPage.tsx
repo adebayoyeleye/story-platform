@@ -5,9 +5,11 @@ import type { StorySummary, ChapterSummary } from "@/types"
 import { Container } from "@/components/layout/Container"
 import { Button } from "@/components/ui/Button"
 import { clearContinueReading, getContinueReading } from "@/features/reader/continueReading"
+import { usePageView } from "@/hooks/usePageView"
 
 export default function StoryDetailPage() {
   const { storyId } = useParams()
+  usePageView(storyId, "STORY")
   const [story, setStory] = useState<StorySummary | null>(null)
   const [chapters, setChapters] = useState<ChapterSummary[]>([])
   const [loading, setLoading] = useState(true)

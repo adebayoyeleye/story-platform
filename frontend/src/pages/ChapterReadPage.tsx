@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/Button"
 import { useToast } from "@/components/ui/ToastHost"
 import { setContinueReading } from "@/features/reader/continueReading"
 import { RichTextContent } from "@/features/reader/components/RichTextContent"
+import { usePageView } from "@/hooks/usePageView"
 
 type Nav = { prev?: ChapterSummary; next?: ChapterSummary }
 
 export default function ChapterReadPage() {
   const { chapterId } = useParams()
+  usePageView(chapterId, "CHAPTER")
   const toast = useToast()
 
   const [chapter, setChapter] = useState<Chapter | null>(null)

@@ -6,10 +6,17 @@ import WriterHomePage from "@/pages/WriterHomePage"
 import WriterStoryPage from "@/pages/WriterStoryPage"
 import AuthPage from "@/pages/AuthPage"
 import RequireAuth from "@/auth/RequireAuth"
+import { useSiteAnalytics } from "@/hooks/useSiteAnalytics"
+
+function AnalyticsTracker() {
+  useSiteAnalytics()
+  return null
+}
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
+      <AnalyticsTracker />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/stories/:storyId" element={<StoryDetailPage />} />

@@ -69,7 +69,16 @@ async function request<T>(url: string, opts: RequestOpts, retry = true): Promise
 
   if (!res.ok) throw await parseApiError(res);
 
-  if (res.status === 204) return undefined as unknown as T;
+  // Empty-body responses: 204 No Content, 202 Accepted (typically), 205 Reset Content
+  if (res.status === 204 || res.status === 205) return undefined as unknown as T;
+
+  // For other successes, only parse JSON if there's actually a body
+  const contentLength = res.headers.get("content-length");
+  const contentType = res.headers.get("content-type") ?? "";
+  if (contentLength === "0" || !contentType.includes("application/json")) {
+    return undefined as unknown as T;
+  }
+
   return res.json();
 }
 
