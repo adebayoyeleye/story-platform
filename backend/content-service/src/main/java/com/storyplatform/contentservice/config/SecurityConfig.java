@@ -30,6 +30,10 @@ public class SecurityConfig {
             "/api/v1/content/stories/*/chapters/**"
         ).permitAll()
 
+        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/v1/content/analytics/views").permitAll()
+
+        .requestMatchers("/api/v1/content/analytics/writer/**").authenticated()
+        
         // Writer capability endpoints
         .requestMatchers("/api/v1/content/writer/**").authenticated()
 
