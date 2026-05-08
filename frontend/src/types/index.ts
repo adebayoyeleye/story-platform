@@ -36,3 +36,10 @@ export type Chapter = {
   chapterNumber: number;
   status: ChapterStatus;
 };
+
+export type ContentStats = {
+  total: number
+  last24Hours: number
+  last7Days: number
+  last30Days: number
+};

@@ -1,5 +1,6 @@
 import type { ChapterSummary } from "@/types"
 import { Button } from "@/components/ui/Button"
+import { StatsCard } from "@/features/analytics/components/StatsCard"
 
 type Props = {
   chapters: ChapterSummary[]
@@ -55,6 +56,9 @@ export function ChapterListPanel({
                 </div>
                 <div className="text-sm text-muted-foreground">Status: {ch.status}</div>
               </button>
+
+              {/* inside the chapter row's render */}
+              <StatsCard contentType="CHAPTER" contentId={ch.id} />
 
               <div className="flex items-center gap-2">
                 {ch.status === "DRAFT" && (

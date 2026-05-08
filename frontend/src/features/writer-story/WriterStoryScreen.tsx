@@ -27,6 +27,7 @@ import { ContributorsPanel } from "./components/ContributorsPanel"
 import { ChapterListPanel } from "./components/ChapterListPanel"
 import { ChapterEditorPanel } from "./components/ChapterEditorPanel"
 import { toEditorHtml } from "./components/editorContent"
+import { StatsCard } from "@/features/analytics/components/StatsCard"
 
 export function WriterStoryScreen() {
   const { storyId } = useParams()
@@ -419,6 +420,8 @@ export function WriterStoryScreen() {
         error={error}
         onChangeStatus={updateStoryStatus}
       />
+
+      {storyId && <StatsCard contentType="STORY" contentId={storyId} />}
 
       <StorySettingsPanel
         byline={story.byline ?? "—"}
