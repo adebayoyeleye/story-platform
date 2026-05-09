@@ -19,7 +19,7 @@ type Props = {
   newContent: string
   setNewContent: (v: string) => void
 
-  onSaveDraft: () => void
+  onSaveChapter: (publishImmediately: boolean) => void
   onNewChapter: () => void
 }
 
@@ -34,7 +34,7 @@ export function ChapterEditorPanel({
   setNewTitle,
   newContent,
   setNewContent,
-  onSaveDraft,
+  onSaveChapter,
   onNewChapter,
 }: Props) {
   return (
@@ -59,9 +59,9 @@ export function ChapterEditorPanel({
             Editing: Chapter {selectedChapter.chapterNumber} ({selectedChapter.status})
           </div>
 
-          {!canEdit && (
+          {!canEdit && selectedChapter?.status === "ARCHIVED" && (
             <div className="text-sm text-muted-foreground">
-              Published/archived chapters are read-only in Phase 1.
+              Archived chapters are read-only. Restore the chapter to edit it.
             </div>
           )}
 
@@ -101,10 +101,19 @@ export function ChapterEditorPanel({
                 <Button
                   variant="secondary"
                   type="button"
-                  onClick={onSaveDraft}
+                  onClick={() => onSaveChapter(false)}
                   disabled={!canEdit || isSaving}
                 >
-                  Save Draft
+                  {selectedChapter?.status === "PUBLISHED" ? "Save edits (don't publish)" : "Save draft"}
+                </Button>
+
+                <Button
+                  variant="primary"   // make the publish action visually primary
+                  type="button"
+                  onClick={() => onSaveChapter(true)}
+                  disabled={!canEdit || isSaving}
+                >
+                  {selectedChapter?.status === "PUBLISHED" ? "Save & update live" : "Save & publish"}
                 </Button>
 
                 <Link to={`/stories/${storyId}`}>

@@ -66,7 +66,9 @@ export function WriterStoryScreen() {
   // disable publish/archive/restore while saving (and show per-row busy)
   const [chapterActionId, setChapterActionId] = useState<string | null>(null)
 
-  const canEdit = selectedChapter?.status === "DRAFT"
+  const canEdit = 
+  selectedChapter?.status === "DRAFT" || 
+  selectedChapter?.status === "PUBLISHED"
 
   const nextChapterNumber = useMemo(() => {
     if (chapters.length === 0) return 1
@@ -153,7 +155,7 @@ export function WriterStoryScreen() {
     }
   }
 
-  async function saveDraft() {
+  async function saveChapter(publishImmediately: boolean) {
     if (!selectedChapter) return
 
     setError(null)
@@ -163,7 +165,7 @@ export function WriterStoryScreen() {
     try {
       const updated = await apiPut<Chapter>(
         `/api/v1/content/writer/chapters/${selectedChapter.id}`,
-        { title: newTitle, content: newContent, contentFormat: "RICH_TEXT_HTML" }
+        { title: newTitle, content: newContent, contentFormat: "RICH_TEXT_HTML", publishImmediately }
       )
 
       setSelectedChapter(updated)
@@ -387,6 +389,7 @@ export function WriterStoryScreen() {
           title: newTitle,
           content: newContent,
           contentFormat: "RICH_TEXT_HTML",
+          publishImmediately: false,
         })
         setIsDirty(false)
         toast.push({ title: "Saved", kind: "success" })
@@ -479,7 +482,7 @@ export function WriterStoryScreen() {
             setNewContent(v)
             setIsDirty(true)
           }}
-          onSaveDraft={saveDraft}
+          onSaveChapter={saveChapter}
           onNewChapter={createDraftChapter}
         />
       </div>
