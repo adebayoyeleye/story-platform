@@ -6,8 +6,11 @@ import com.storyplatform.contentservice.domain.ChapterStatus;
 import com.storyplatform.contentservice.domain.Story;
 import com.storyplatform.contentservice.domain.StoryStatus;
 import com.storyplatform.contentservice.domain.ContentFormat;
+import com.storyplatform.contentservice.domain.ContentParentType;
+import com.storyplatform.contentservice.domain.ContentRevision;
 import com.storyplatform.contentservice.exception.ResourceNotFoundException;
 import com.storyplatform.contentservice.repository.ChapterRepository;
+import com.storyplatform.contentservice.repository.ContentRevisionRepository;
 import com.storyplatform.contentservice.repository.StoryRepository;
 
 import org.springframework.data.domain.Page;
@@ -22,15 +25,18 @@ public class ChapterServiceImpl implements ChapterService {
     private final ChapterRepository chapterRepository;
     private final StoryRepository storyRepository;
     private final ChapterProperties chapterProperties;
+    private final ContentRevisionRepository revisionRepository;
 
     public ChapterServiceImpl(
             ChapterRepository chapterRepository,
             StoryRepository storyRepository,
-            ChapterProperties chapterProperties
+            ChapterProperties chapterProperties,
+            ContentRevisionRepository revisionRepository
     ) {
         this.chapterRepository = chapterRepository;
         this.storyRepository = storyRepository;
         this.chapterProperties = chapterProperties;
+        this.revisionRepository = revisionRepository;
     }
 
     @Override
@@ -68,22 +74,54 @@ public class ChapterServiceImpl implements ChapterService {
     }
 
     @Override
-    public Chapter updateDraftContent(
+    public Chapter editContent(
             String chapterId,
+            String authorId,
             String title,
             String content,
-            ContentFormat contentFormat
+            ContentFormat contentFormat,
+            boolean publishImmediately
     ) {
         Chapter chapter = getDraftableById(chapterId);
-
-        if (chapter.getStatus() != ChapterStatus.DRAFT) {
-            throw new IllegalStateException("Only DRAFT chapters can be edited");
-        }
         validateChapterContent(title, content);
-        chapter.setTitle(title);
-        chapter.setContent(content);
-        chapter.setContentFormat(contentFormat);
-
+    
+        int nextRevisionNumber = revisionRepository
+                .findFirstByParentIdAndParentTypeOrderByRevisionNumberDesc(
+                        chapterId, ContentParentType.CHAPTER)
+                .map(r -> r.getRevisionNumber() + 1)
+                .orElse(1);
+    
+        ContentRevision revision = new ContentRevision(
+                chapterId,
+                ContentParentType.CHAPTER,
+                nextRevisionNumber,
+                title,
+                content,
+                contentFormat,
+                authorId
+        );
+    
+        // Decide whether this revision becomes the live version
+        boolean shouldGoLive =
+                chapter.getStatus() == ChapterStatus.DRAFT     // first publish via status change later
+                || (chapter.getStatus() == ChapterStatus.PUBLISHED && publishImmediately);
+    
+        if (shouldGoLive) {
+            revision.markPublished();
+        }
+    
+        ContentRevision savedRevision = revisionRepository.save(revision);
+    
+        if (shouldGoLive) {
+            // Flip pointer + denormalize content for fast reader reads
+            chapter.setTitle(title);
+            chapter.setContent(content);
+            chapter.setContentFormat(contentFormat);
+            chapter.setCurrentRevisionId(savedRevision.getId());
+        }
+        // For PUBLISHED chapters where publishImmediately = false:
+        // revision is saved as a "pending edit", chapter content stays unchanged.
+    
         return chapterRepository.save(chapter);
     }
 
@@ -179,6 +217,38 @@ public class ChapterServiceImpl implements ChapterService {
         if (content != null && content.length() > chapterProperties.getMaxLength()) {
             throw new IllegalArgumentException("Chapter content exceeds max length");
         }
+    }
+
+    @Override
+    public Chapter publishRevision(String chapterId, String revisionId) {
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new ResourceNotFoundException("Chapter not found"));
+
+        ContentRevision revision = revisionRepository.findById(revisionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Revision not found"));
+
+        if (!revision.getParentId().equals(chapterId)
+                || revision.getParentType() != ContentParentType.CHAPTER) {
+            throw new IllegalArgumentException("Revision does not belong to this chapter");
+        }
+
+        // Atomicity caveat: between saving the revision and updating the chapter pointer, a crash leaves an orphan revision. For a single-user writer flow, this is acceptable for now. Later, we should wrap these in a Mongo transaction.
+
+        revision.markPublished();
+        revisionRepository.save(revision);
+
+        chapter.setTitle(revision.getTitle());
+        chapter.setContent(revision.getContent());
+        chapter.setContentFormat(revision.getContentFormat());
+        chapter.setCurrentRevisionId(revision.getId());
+
+        return chapterRepository.save(chapter);
+    }
+
+    @Override
+    public Page<ContentRevision> getChapterRevisions(String chapterId, Pageable pageable) {
+        return revisionRepository.findByParentIdAndParentTypeOrderByRevisionNumberDesc(
+                chapterId, ContentParentType.CHAPTER, pageable);
     }
 
 }

@@ -20,6 +20,7 @@ public class Chapter {
     private String id;
 
     private String storyId;
+    private String currentRevisionId;
     private String title;
     private String content;
     private ContentFormat contentFormat;
@@ -51,6 +52,7 @@ public class Chapter {
 
     // getters
     public String getId() { return id; }
+    public String getCurrentRevisionId() { return currentRevisionId; }
     public String getStoryId() { return storyId; }
     public String getTitle() { return title; }
     public String getContent() { return content; }
@@ -63,6 +65,11 @@ public class Chapter {
     public Instant getUpdatedAt() { return updatedAt; }
 
     // controlled mutations
+    public void setCurrentRevisionId(String currentRevisionId) {
+        this.currentRevisionId = currentRevisionId;
+        this.updatedAt = Instant.now();
+    }
+    
     public void setChapterNumber(int chapterNumber) {
         this.chapterNumber = chapterNumber;
         this.updatedAt = Instant.now();

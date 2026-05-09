@@ -3,16 +3,22 @@ package com.storyplatform.contentservice.controller;
 import com.storyplatform.contentservice.domain.Chapter;
 import com.storyplatform.contentservice.domain.ChapterStatus;
 import com.storyplatform.contentservice.domain.ContentFormat;
+import com.storyplatform.contentservice.domain.ContentRevision;
+import com.storyplatform.contentservice.dto.ChapterEditRequestDto;
 import com.storyplatform.contentservice.dto.ChapterRequestDto;
 import com.storyplatform.contentservice.dto.ChapterResponseDto;
 import com.storyplatform.contentservice.dto.ChapterSummaryResponseDto;
-import com.storyplatform.contentservice.dto.ChapterUpdateRequestDto;
+// import com.storyplatform.contentservice.dto.ChapterUpdateRequestDto;
+import com.storyplatform.contentservice.dto.ContentRevisionResponseDto;
 import com.storyplatform.contentservice.service.ChapterService;
 import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -95,21 +101,54 @@ public class ChapterController {
     }
 
     @PutMapping("/writer/chapters/{chapterId}")
-    public ResponseEntity<ChapterResponseDto> updateDraft(
+    public ResponseEntity<ChapterResponseDto> editChapter(
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable String chapterId,
-            @Valid @RequestBody ChapterUpdateRequestDto request
+            @Valid @RequestBody ChapterEditRequestDto request
     ) {
-        ContentFormat format =
-                request.contentFormat() == null ? ContentFormat.PLAIN_TEXT : request.contentFormat();
+        ContentFormat format = request.contentFormat() == null
+                ? ContentFormat.PLAIN_TEXT : request.contentFormat();
     
-        Chapter updated = chapterService.updateDraftContent(
+        Chapter updated = chapterService.editContent(
                 chapterId,
+                jwt.getSubject(),
                 request.title(),
                 request.content(),
-                format
+                format,
+                request.publishImmediately()
         );
-    
         return ResponseEntity.ok(toResponse(updated));
+    }
+    
+    @PostMapping("/writer/chapters/{chapterId}/revisions/{revisionId}/publish")
+    public ResponseEntity<ChapterResponseDto> publishRevision(
+            @PathVariable String chapterId,
+            @PathVariable String revisionId
+    ) {
+        Chapter updated = chapterService.publishRevision(chapterId, revisionId);
+        return ResponseEntity.ok(toResponse(updated));
+    }
+    
+    @GetMapping("/writer/chapters/{chapterId}/revisions")
+    public ResponseEntity<Page<ContentRevisionResponseDto>> getRevisions(
+            @PathVariable String chapterId,
+            Pageable pageable
+    ) {
+        Page<ContentRevisionResponseDto> result = chapterService
+                .getChapterRevisions(chapterId, pageable)
+                .map(this::toRevisionResponse);
+        return ResponseEntity.ok(result);
+    }
+    
+    private ContentRevisionResponseDto toRevisionResponse(ContentRevision r) {
+        return new ContentRevisionResponseDto(
+                r.getId(),
+                r.getRevisionNumber(),
+                r.getTitle(),
+                r.getAuthorId(),
+                r.getCreatedAt(),
+                r.getPublishedAt()
+        );
     }
 
     @PatchMapping("/writer/chapters/{chapterId}/status")
