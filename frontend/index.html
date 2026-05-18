@@ -1,42 +1,42 @@
 <!doctype html>
   <html lang="en">
-    <!-- Theme bootstrap: runs before any React code to avoid FOUC.
-      Mirrors the logic in src/lib/theme.ts:getInitialTheme. -->
-  <script>
-    (function () {
-      try {
-        var saved = localStorage.getItem("theme")
-        var prefersDark =
-          window.matchMedia &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches
-        var theme =
-          saved === "light" || saved === "dark"
-            ? saved
-            : prefersDark ? "dark" : "light"
-        if (theme === "dark") {
-          document.documentElement.classList.add("dark")
-        }
-        document.documentElement.style.colorScheme = theme
-      } catch (_) {}
-    })()
-  </script>
-  <head>
-    <meta charset="UTF-8" />
-    <!-- Preload only the weight readers see on the reading page.
-        Other weights load on demand without blocking. -->
-    <link
-      rel="preload"
-      as="font"
-      type="font/woff2"
-      href="/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-normal.woff2"
-      crossorigin
-    />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+    <head>
+      <meta charset="UTF-8" />
+      <!-- Theme bootstrap: runs before any React code to avoid FOUC.
+        Mirrors the logic in src/lib/theme.ts:getInitialTheme. -->
+      <script>
+        (function () {
+          try {
+            var saved = localStorage.getItem("theme")
+            var prefersDark =
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches
+            var theme =
+              saved === "light" || saved === "dark"
+                ? saved
+                : prefersDark ? "dark" : "light"
+            if (theme === "dark") {
+              document.documentElement.classList.add("dark")
+            }
+            document.documentElement.style.colorScheme = theme
+          } catch (_) {}
+        })()
+      </script>
+      <!-- Preload only the weight readers see on the reading page.
+          Other weights load on demand without blocking. -->
+      <link
+        rel="preload"
+        as="font"
+        type="font/woff2"
+        href="/node_modules/@fontsource/source-serif-4/files/source-serif-4-latin-400-normal.woff2"
+        crossorigin
+      />
+      <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Arokoverse</title>
+    </head>
+    <body>
+      <div id="root"></div>
+      <script type="module" src="/src/main.tsx"></script>
+    </body>
+  </html>
