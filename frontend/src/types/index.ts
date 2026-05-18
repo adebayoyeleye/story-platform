@@ -4,6 +4,12 @@ export type ContentFormat = 'PLAIN_TEXT' | 'RICH_TEXT_HTML';
 
 export type ContributorRole = 'OWNER' | 'CO_AUTHOR' | 'EDITOR';
 
+export type ContentType =
+  | 'STORY_WITH_CHAPTERS'
+  | 'SHORT_STORY'
+  | 'ARTICLE'
+  | 'POEM';
+
 export type StoryContributor = {
   userId: string;
   role: ContributorRole;
@@ -16,6 +22,7 @@ export type StorySummary = {
   title: string;
   synopsis?: string | null;
   status: StoryStatus;
+  contentType: ContentType;    // NEW: required, server always returns one
   byline?: string | null;
   contributors?: StoryContributor[];
 };

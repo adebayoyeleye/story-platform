@@ -1,21 +1,19 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ApiError, apiGet, apiPost } from '@/api/http';
-import type { StorySummary } from '../types';
-import { Button } from '@/components/ui/Button';
-import { Container } from '@/components/layout/Container';
-import { Field } from '@/components/ui/Field';
-import { Input } from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea';
+import { useCallback, useEffect, useState } from "react"
+import { useNavigate, Link } from "react-router-dom"
+import { ApiError, apiGet, apiPost } from "@/api/http"
+import type { ContentType, StorySummary } from "../types"
+import { Button } from "@/components/ui/Button"
+import { Container } from "@/components/layout/Container"
+import { ContentTypeChooser } from "@/features/writer/ContentTypeChooser"
+import { CONTENT_TYPE_META } from "@/lib/contentType"
 
 export default function WriterHome() {
-  const nav = useNavigate();
-  const [title, setTitle] = useState('');
-  const [synopsis, setSynopsis] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [myStories, setMyStories] = useState<StorySummary[]>([]);
-  const [loadingMine, setLoadingMine] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const nav = useNavigate()
+  const [error, setError] = useState<string | null>(null)
+  const [myStories, setMyStories] = useState<StorySummary[]>([])
+  const [loadingMine, setLoadingMine] = useState(false)
+  const [chooserOpen, setChooserOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
 
   const loadMyStories = useCallback(async () => {
     setError(null)
@@ -36,97 +34,112 @@ export default function WriterHome() {
     loadMyStories()
   }, [loadMyStories])
 
-  async function onCreate(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setFieldErrors({});
+  async function handleChoose(type: ContentType) {
+    setChooserOpen(false)
+    setCreating(true)
+    setError(null)
 
     try {
+      // Minimal placeholder. The writer renames it in the editor.
+      // Synopsis is optional and stays empty until they fill it.
       const story = await apiPost<StorySummary>(
-        '/api/v1/content/writer/stories',
-        { title, synopsis }
-      );
-      nav(`/write/stories/${story.id}`);
-      await loadMyStories();
+        "/api/v1/content/writer/stories",
+        {
+          title: "Untitled",
+          synopsis: "",
+          contentType: type,
+        }
+      )
+      nav(`/write/stories/${story.id}`)
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setError(err.message);
-        setFieldErrors(err.fieldErrors);
+        setError(err.message)
       } else {
-        setError(err instanceof Error ? err.message : 'Failed to create story');
+        setError(err instanceof Error ? err.message : "Failed to create work")
       }
+      setCreating(false)
     }
   }
 
   return (
     <Container>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Writer Mode ✍️</h1>
-        <Link to="/" className="text-blue-600 hover:underline">Back to Library</Link>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="font-display text-3xl">Your works</h1>
+        <Link to="/" className="text-primary hover:opacity-80">
+          ← Back to library
+        </Link>
       </div>
 
-      {error && <div className="text-red-600 mb-4">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 rounded-md border border-error/30 bg-error/10 text-error px-4 py-2 text-sm"
+        >
+          {error}
+        </div>
+      )}
 
-      <form onSubmit={onCreate} className="grid gap-3">
-        <Field label="Story Title" error={fieldErrors.title}>
-          <Input
-            aria-invalid={!!fieldErrors.title}
-            placeholder="Story title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </Field>
+      <div className="mb-8">
+        <Button
+          onClick={() => setChooserOpen(true)}
+          disabled={creating}
+        >
+          {creating ? "Creating…" : "+ New work"}
+        </Button>
+      </div>
 
-        <Field label="Synopsis" error={fieldErrors.synopsis}>
-          <Textarea
-            aria-invalid={!!fieldErrors.synopsis}
-            placeholder="Synopsis"
-            value={synopsis}
-            onChange={(e) => setSynopsis(e.target.value)}
-            rows={4}
-          />
-        </Field>
-
-        <Button variant="secondary" type="submit">Create Story</Button>
-      </form>
-
-      <div className="mt-10 border-t pt-6">
-        <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-semibold">My Stories</h2>
-          <Button variant="secondary"
-            type="button"
-            className="border px-3 py-2 rounded disabled:opacity-50"
+      <div className="border-t border-border pt-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">All works</h2>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={loadMyStories}
             disabled={loadingMine}
           >
-            {loadingMine ? 'Loading...' : 'Load'}
+            {loadingMine ? "Loading…" : "Refresh"}
           </Button>
         </div>
 
-        {myStories.length === 0 && (
-          <div className="text-gray-600">No stories found for this author yet.</div>
+        {myStories.length === 0 && !loadingMine && (
+          <div className="text-muted-foreground">
+            No works yet. Click <strong>+ New work</strong> to start something.
+          </div>
         )}
 
         <div className="grid gap-2">
-          {myStories.map(s => (
-            <div key={s.id} className="border rounded p-3 flex justify-between items-center">
-              <div>
-                <div className="font-medium">{s.title}</div>
-                <div className="text-sm text-gray-600">{s.status}</div>
-              </div>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => nav(`/write/stories/${s.id}`)}
+          {myStories.map((s) => {
+            const meta = CONTENT_TYPE_META[s.contentType]
+            return (
+              <div
+                key={s.id}
+                className="border border-border rounded-md p-3 flex justify-between items-center hover:bg-surface-muted transition-colors"
               >
-                Open
-              </Button>
-            </div>
-          ))}
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{s.title}</div>
+                  <div className="text-sm text-muted-foreground">
+                    <span aria-hidden="true">{meta.icon}</span>{" "}
+                    {meta.label} · {s.status}
+                  </div>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => nav(`/write/stories/${s.id}`)}
+                >
+                  Open
+                </Button>
+              </div>
+            )
+          })}
         </div>
       </div>
 
+      <ContentTypeChooser
+        open={chooserOpen}
+        onClose={() => setChooserOpen(false)}
+        onChoose={handleChoose}
+      />
     </Container>
-  );
+  )
 }
