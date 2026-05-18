@@ -1,9 +1,6 @@
 package com.storyplatform.contentservice.controller;
 
-import com.storyplatform.contentservice.domain.ContentType;
-import com.storyplatform.contentservice.domain.ContributorRole;
 import com.storyplatform.contentservice.domain.Story;
-import com.storyplatform.contentservice.domain.StoryContributor;
 import com.storyplatform.contentservice.domain.StoryStatus;
 import com.storyplatform.contentservice.dto.AddContributorRequestDto;
 import com.storyplatform.contentservice.dto.StoryContributorDto;
@@ -11,7 +8,6 @@ import com.storyplatform.contentservice.dto.StoryResponseDto;
 import com.storyplatform.contentservice.dto.UpdateContributorRequestDto;
 import com.storyplatform.contentservice.dto.UpdateStoryMetaRequestDto;
 import com.storyplatform.contentservice.dto.WriterStoryCreateRequestDto;
-import com.storyplatform.contentservice.service.BylineBuilder;
 import com.storyplatform.contentservice.service.StoryService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -76,31 +72,22 @@ public class StoryController {
     // WRITER: Create story (authorId comes from token)
 
     @PostMapping("/writer/stories")
-    public ResponseEntity<StoryResponseDto> createWriter(
-            @AuthenticationPrincipal Jwt jwt,
-            @Valid @RequestBody WriterStoryCreateRequestDto request
-    ) {
-        String authorId = jwt.getSubject(); // ✅ source of truth
+        public ResponseEntity<StoryResponseDto> createWriter(
+                @AuthenticationPrincipal Jwt jwt,
+                @Valid @RequestBody WriterStoryCreateRequestDto request
+        ) {
+        String authorId = jwt.getSubject();
 
-        ContentType type = request.contentType() != null
-                ? request.contentType()
-                : ContentType.STORY_WITH_CHAPTERS;
-        
-        Story story = new Story(request.title(), authorId, request.synopsis(), type);
-
-        // seed contributors
-        story.getContributors().add(new StoryContributor(
+        Story saved = storyService.createForAuthor(
                 authorId,
-                ContributorRole.OWNER,
-                request.penName() // optional
-        ));
-
-        story.setByline(BylineBuilder.build(story));
-
-        Story saved = storyService.create(story);
+                request.title(),
+                request.synopsis(),
+                request.penName(),
+                request.contentType()
+        );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved));
-    }
+        }
 
     /**
      * Writer can load DRAFT/ARCHIVED too (no "admin" naming)

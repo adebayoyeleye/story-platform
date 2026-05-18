@@ -1,5 +1,6 @@
 package com.storyplatform.contentservice.service;
 
+import com.storyplatform.contentservice.domain.ContentType;
 import com.storyplatform.contentservice.domain.ContributorRole;
 import com.storyplatform.contentservice.domain.Story;
 import com.storyplatform.contentservice.domain.StoryStatus;
@@ -57,8 +58,41 @@ public class StoryServiceImpl implements StoryService {
         }
     } */
 
-    @Override
+/*     @Override
     public Story create(Story story) {
+        return storyRepository.save(story);
+    } */
+
+    @Override
+    public Story createForAuthor(
+            String authorId,
+            String title,
+            String synopsis,
+            String penName,
+            ContentType contentType
+    ) {
+        ContentType resolvedType = contentType != null
+                ? contentType
+                : ContentType.STORY_WITH_CHAPTERS;
+    
+        Story story = new Story(title, authorId, synopsis, resolvedType);
+    
+        // Seed the OWNER contributor. Every Story has exactly one OWNER on
+        // creation; co-authors and editors are added later via dedicated
+        // endpoints. Doing this here — not in the controller — means any
+        // future caller (CLI, importer, event consumer) gets it for free.
+        story.getContributors().add(new StoryContributor(
+                authorId,
+                ContributorRole.OWNER,
+                penName
+        ));
+    
+        // Byline is derived state. Computing it on save (rather than at
+        // read time) is a deliberate choice: bylines are read 1000× more
+        // often than they change, and the contributor list changes through
+        // a small set of well-known operations we can hook into.
+        story.setByline(BylineBuilder.build(story));
+    
         return storyRepository.save(story);
     }
 
