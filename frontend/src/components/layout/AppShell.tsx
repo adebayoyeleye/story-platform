@@ -2,6 +2,7 @@ import { Link, NavLink, useLocation } from "react-router-dom"
 import { useTheme } from "@/hooks/useTheme"
 import { cn } from "@/lib/cn"
 import type { PropsWithChildren } from "react"
+import { BRAND } from "@/lib/brand"
 
 type Props = PropsWithChildren<{
   /** Hide the chrome — used by the reading page in distraction-free mode. */
@@ -36,10 +37,10 @@ export function AppShell({ children, hideChrome }: Props) {
             <Link
               to="/"
               className="font-display text-xl tracking-tight hover:opacity-80"
-              aria-label="Home"
+              aria-label={`${BRAND.name} home`}
             >
               {/* Wordmark placeholder. Swap for an SVG/logo later. */}
-              Storyplatform
+              {BRAND.name}
             </Link>
 
             <nav className="flex items-center gap-1 text-sm">
@@ -70,7 +71,7 @@ export function AppShell({ children, hideChrome }: Props) {
       {showChrome && (
         <footer className="border-t border-border mt-12 py-6 text-xs text-muted-foreground">
           <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8 flex flex-wrap gap-x-6 gap-y-2 justify-between">
-            <span>© {new Date().getFullYear()} Storyplatform</span>
+            <span>© {new Date().getFullYear()} {BRAND.name}</span>
             <span className="flex gap-4">
               {/* Stubs until legal docs ship per Part 2 of the design doc */}
               <span className="opacity-60">Terms</span>
