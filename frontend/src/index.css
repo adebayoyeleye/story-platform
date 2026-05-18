@@ -1,76 +1,126 @@
 @import "tailwindcss";
 
 @theme {
-  /* Fonts */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* ---------- Fonts ---------- */
+  --font-sans:    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-serif:   "Source Serif 4", ui-serif, Georgia, Cambria, "Times New Roman", serif;
+  --font-display: "Fraunces", "Source Serif 4", Georgia, serif;
 
-  /* Border Radius */
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  /* ---------- Colors ---------- */
+  --color-background:         hsl(var(--background));
+  --color-surface:            hsl(var(--surface));
+  --color-surface-muted:      hsl(var(--surface-muted));
 
-  /* Colors - Mapping HSL variables to utility classes */
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  
-  --color-primary: hsl(var(--primary));
+  --color-foreground:         hsl(var(--foreground));
+  --color-muted-foreground:   hsl(var(--muted-foreground));
+
+  --color-primary:            hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-accent:             hsl(var(--accent));
 
-  /* Container */
+  --color-border:             hsl(var(--border));
+  --color-input:              hsl(var(--input));
+  --color-ring:               hsl(var(--ring));
+
+  --color-success:            hsl(var(--success));
+  --color-error:              hsl(var(--error));
+
+  /* Back-compat aliases */
+  --color-card:               hsl(var(--card));
+  --color-card-foreground:    hsl(var(--card-foreground));
+  --color-muted:              hsl(var(--muted));
+
+  /* ---------- Radius ---------- */
+  --radius-sm:   0.25rem;
+  --radius-md:   0.5rem;
+  --radius-lg:   0.75rem;
+  --radius-full: 9999px;
+
+  /* ---------- Reading-scale typography (Source Serif 4) ---------- */
+  --text-read-body:      1.25rem;      /* 20px */
+  --text-read-body--line-height:   2rem;     /* 32px (1.6) */
+  --text-read-body-lg:   1.375rem;     /* 22px */
+  --text-read-body-lg--line-height: 2.25rem; /* 36px */
+  --text-read-h1:        2.5rem;       /* 40px */
+  --text-read-h1--line-height:     3rem;     /* 48px */
+  --text-read-h2:        1.75rem;      /* 28px */
+  --text-read-h2--line-height:     2.25rem;  /* 36px */
+  --text-read-h3:        1.375rem;     /* 22px */
+  --text-read-h3--line-height:     2rem;     /* 32px */
+  --text-read-h4:        1.125rem;     /* 18px */
+  --text-read-h4--line-height:     1.75rem;  /* 28px */
+  --text-read-small:     1rem;         /* 16px */
+  --text-read-small--line-height:  1.5rem;   /* 24px */
+  --text-read-poem:      1.125rem;     /* 18px */
+  --text-read-poem--line-height:   1.75rem;  /* 28px, looser via spacing in §4 */
+
+  /* ---------- Containers ---------- */
   --container-3xl: 72rem;
 }
+
+/* Tailwind v4 removed implicit dark-variant config. This restores `dark:` utilities
+   driven by the .dark class anywhere up the tree. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Keep your existing variable definitions here */
 @layer base {
   :root {
-    /* Minimal light theme */
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Surfaces */
+    --background:        40 33% 98%;   /* page */
+    --surface:           0 0% 100%;    /* cards, panels */
+    --surface-muted:     38 23% 93%;   /* alt rows, wells */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Text */
+    --foreground:        36 8% 10%;    /* body, headings */
+    --muted-foreground:  36 7% 35%;    /* bylines, captions */
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Brand */
+    --primary:           22 47% 33%;   /* warm umber */
+    --primary-foreground:40 33% 98%;
+    --accent:            34 41% 63%;   /* gold-bronze, NEVER for small text */
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    /* Lines + focus */
+    --border:            38 21% 87%;
+    --input:             38 20% 81%;
+    --ring:              22 47% 33%;
 
-    /* single accent color (tweak later if your design plan says otherwise) */
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --ring: 221.2 83.2% 53.3%;
+    /* Semantic */
+    --success:           136 32% 36%;
+    --error:             5 50% 43%;
 
-    /* 4px-ish radius for minimalist feel */
-    --radius: 0.25rem;
+    /* Card kept as alias of surface for back-compat with existing code */
+    --card:              0 0% 100%;
+    --card-foreground:   36 8% 10%;
+    --muted:             38 23% 93%;
+
+    /* Radius scale */
+    --radius-sm:         0.25rem;
+    --radius:            0.5rem;
+    --radius-lg:         0.75rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background:        40 14% 7%;
+    --surface:           36 13% 10%;
+    --surface-muted:     36 13% 13%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --foreground:        40 22% 91%;
+    --muted-foreground:  38 10% 60%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --primary:           26 47% 67%;   /* lighter tan, inverts up for contrast */
+    --primary-foreground:40 14% 7%;
+    --accent:            34 56% 72%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border:            36 14% 16%;
+    --input:             36 17% 19%;
+    --ring:              26 47% 67%;
 
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --ring: 217.2 91.2% 59.8%;
+    --success:           131 35% 62%;
+    --error:             6 55% 67%;
+
+    --card:              36 13% 10%;
+    --card-foreground:   40 22% 91%;
+    --muted:             36 13% 13%;
   }
 
   * {
@@ -79,6 +129,20 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    /* Better long-form rendering on macOS and Linux */
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Vestibular-safety baseline. Required by §3.4 of the design doc.
+     Apply once, globally, so we never have to remember per-component. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
@@ -87,26 +151,53 @@
     @apply mx-auto w-full max-w-5xl px-4;
   }
 
+  /* Width controller only — never adds type rules. */
   .reading-width {
-    @apply mx-auto w-full max-w-2xl px-4;
-  }
-}
-
-@layer components {
-  .story-richtext p {
-    @apply mb-4;
+    @apply mx-auto w-full max-w-2xl px-6;
   }
 
-  .story-richtext p:last-child {
-    @apply mb-0;
+  /* Type controller only — never adds width rules. Orthogonal to .reading-width. */
+  .story-richtext {
+    @apply font-serif text-foreground;
+    font-size: var(--text-read-body);
+    line-height: var(--text-read-body--line-height);
   }
 
-  .story-richtext strong {
-    @apply font-semibold;
+  .story-richtext p          { @apply mb-6; }
+  .story-richtext p:last-child { @apply mb-0; }
+
+  .story-richtext strong     { @apply font-semibold; }
+  .story-richtext em         { font-style: italic; }
+
+  .story-richtext h1 {
+    font-size: var(--text-read-h1);
+    line-height: var(--text-read-h1--line-height);
+    @apply font-semibold mt-12 mb-6;
+  }
+  .story-richtext h2 {
+    font-size: var(--text-read-h2);
+    line-height: var(--text-read-h2--line-height);
+    @apply font-semibold mt-10 mb-4;
+  }
+  .story-richtext h3 {
+    font-size: var(--text-read-h3);
+    line-height: var(--text-read-h3--line-height);
+    @apply font-semibold mt-8 mb-3;
+  }
+  .story-richtext h4 {
+    font-size: var(--text-read-h4);
+    line-height: var(--text-read-h4--line-height);
+    @apply font-semibold mt-6 mb-2;
   }
 
-  .story-richtext em {
-    font-style: italic;
+  .story-richtext blockquote {
+    @apply border-l-2 border-border pl-5 my-6 italic text-muted-foreground;
   }
+  .story-richtext hr         { @apply my-10 border-border; }
+  .story-richtext ul         { @apply list-disc pl-6 mb-6 space-y-2; }
+  .story-richtext ol         { @apply list-decimal pl-6 mb-6 space-y-2; }
+  .story-richtext pre        { @apply bg-surface-muted rounded-md p-4 my-6 overflow-x-auto; }
+  .story-richtext code       { @apply font-mono text-sm; }
+  .story-richtext a          { @apply text-primary underline underline-offset-2 hover:opacity-80; }
 }
 
