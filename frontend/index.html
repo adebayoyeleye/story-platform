@@ -1,5 +1,25 @@
 <!doctype html>
-<html lang="en">
+  <html lang="en">
+    <!-- Theme bootstrap: runs before any React code to avoid FOUC.
+      Mirrors the logic in src/lib/theme.ts:getInitialTheme. -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("theme")
+        var prefersDark =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches
+        var theme =
+          saved === "light" || saved === "dark"
+            ? saved
+            : prefersDark ? "dark" : "light"
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark")
+        }
+        document.documentElement.style.colorScheme = theme
+      } catch (_) {}
+    })()
+  </script>
   <head>
     <meta charset="UTF-8" />
     <!-- Preload only the weight readers see on the reading page.

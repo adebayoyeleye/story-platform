@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button"
 import { Container } from "@/components/layout/Container"
 import { ContentTypeChooser } from "@/features/writer/ContentTypeChooser"
 import { CONTENT_TYPE_META } from "@/lib/contentType"
+import { AppShell } from "@/components/layout/AppShell"
 
 export default function WriterHome() {
   const nav = useNavigate()
@@ -62,84 +63,80 @@ export default function WriterHome() {
   }
 
   return (
-    <Container>
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="font-display text-3xl">Your works</h1>
-        <Link to="/" className="text-primary hover:opacity-80">
-          ← Back to library
-        </Link>
-      </div>
+    <AppShell>
+      <Container>
 
-      {error && (
-        <div
-          role="alert"
-          className="mb-4 rounded-md border border-error/30 bg-error/10 text-error px-4 py-2 text-sm"
-        >
-          {error}
-        </div>
-      )}
-
-      <div className="mb-8">
-        <Button
-          onClick={() => setChooserOpen(true)}
-          disabled={creating}
-        >
-          {creating ? "Creating…" : "+ New work"}
-        </Button>
-      </div>
-
-      <div className="border-t border-border pt-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">All works</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={loadMyStories}
-            disabled={loadingMine}
+        {error && (
+          <div
+            role="alert"
+            className="mb-4 rounded-md border border-error/30 bg-error/10 text-error px-4 py-2 text-sm"
           >
-            {loadingMine ? "Loading…" : "Refresh"}
-          </Button>
-        </div>
-
-        {myStories.length === 0 && !loadingMine && (
-          <div className="text-muted-foreground">
-            No works yet. Click <strong>+ New work</strong> to start something.
+            {error}
           </div>
         )}
 
-        <div className="grid gap-2">
-          {myStories.map((s) => {
-            const meta = CONTENT_TYPE_META[s.contentType]
-            return (
-              <div
-                key={s.id}
-                className="border border-border rounded-md p-3 flex justify-between items-center hover:bg-surface-muted transition-colors"
-              >
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{s.title}</div>
-                  <div className="text-sm text-muted-foreground">
-                    <span aria-hidden="true">{meta.icon}</span>{" "}
-                    {meta.label} · {s.status}
-                  </div>
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => nav(`/write/stories/${s.id}`)}
-                >
-                  Open
-                </Button>
-              </div>
-            )
-          })}
+        <div className="mb-8">
+          <Button
+            onClick={() => setChooserOpen(true)}
+            disabled={creating}
+          >
+            {creating ? "Creating…" : "+ New work"}
+          </Button>
         </div>
-      </div>
 
-      <ContentTypeChooser
-        open={chooserOpen}
-        onClose={() => setChooserOpen(false)}
-        onChoose={handleChoose}
-      />
-    </Container>
+        <div className="border-t border-border pt-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">All works</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={loadMyStories}
+              disabled={loadingMine}
+            >
+              {loadingMine ? "Loading…" : "Refresh"}
+            </Button>
+          </div>
+
+          {myStories.length === 0 && !loadingMine && (
+            <div className="text-muted-foreground">
+              No works yet. Click <strong>+ New work</strong> to start something.
+            </div>
+          )}
+
+          <div className="grid gap-2">
+            {myStories.map((s) => {
+              const meta = CONTENT_TYPE_META[s.contentType]
+              return (
+                <div
+                  key={s.id}
+                  className="border border-border rounded-md p-3 flex justify-between items-center hover:bg-surface-muted transition-colors"
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{s.title}</div>
+                    <div className="text-sm text-muted-foreground">
+                      <span aria-hidden="true">{meta.icon}</span>{" "}
+                      {meta.label} · {s.status}
+                    </div>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => nav(`/write/stories/${s.id}`)}
+                  >
+                    Open
+                  </Button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <ContentTypeChooser
+          open={chooserOpen}
+          onClose={() => setChooserOpen(false)}
+          onChoose={handleChoose}
+        />
+      </Container>
+    </AppShell>
   )
 }

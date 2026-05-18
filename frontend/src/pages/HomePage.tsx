@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import type { StorySummary } from '../types';
 import { apiGet } from '@/api/http';
 import { Container } from '@/components/layout/Container';
+import { AppShell } from '@/components/layout/AppShell';
 
 export default function Home() {
   const [stories, setStories] = useState<StorySummary[]>([]);
@@ -43,50 +44,60 @@ export default function Home() {
     return () => { cancelled = true; };
   }, [page]);
 
-  if (loading) return <Container>Loading stories...</Container>;
-  if (error) return <Container className="text-red-600">{error}</Container>;
+  if (loading) {
+    return (
+      <AppShell>
+        <Container>Loading stories...</Container>
+      </AppShell>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppShell>
+        <Container className="text-red-600">{error}</Container>
+      </AppShell>
+    );
+  }
 
   return (
-    <Container>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Library 📚</h1>
-        <Link to="/write" className="text-blue-600 hover:underline">Writer Mode</Link>
-      </div>
-
-      <div className="grid gap-4">
-        <div className="flex gap-3 mt-6">
-          <button
-            className="border px-3 py-2 rounded disabled:opacity-50"
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
-          >
-            Prev
-          </button>
-          <button
-            className="border px-3 py-2 rounded disabled:opacity-50"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={!hasNext}
-          >
-            Next
-          </button>
-        </div>
-
-        {stories.length === 0 && (
-          <div className="text-gray-600">No published stories yet.</div>
-        )}
-
-        {stories.map(story => (
-          <div key={story.id} className="border p-4 rounded shadow hover:shadow-md transition">
-            <h2 className="text-xl font-semibold">
-              <Link to={`/stories/${story.id}`} className="text-blue-600 hover:underline">
-                {story.title}
-              </Link>
-            </h2>
-            <p className="text-gray-600">By {story.byline}</p>
-            <p className="mt-2 text-gray-800">{story.synopsis}</p>
+    <AppShell>
+      <Container>
+        <div className="grid gap-4">
+          <div className="flex gap-3 mt-6">
+            <button
+              className="border px-3 py-2 rounded disabled:opacity-50"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+            >
+              Prev
+            </button>
+            <button
+              className="border px-3 py-2 rounded disabled:opacity-50"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!hasNext}
+            >
+              Next
+            </button>
           </div>
-        ))}
-      </div>
-    </Container>
+
+          {stories.length === 0 && (
+            <div className="text-gray-600">No published stories yet.</div>
+          )}
+
+          {stories.map(story => (
+            <div key={story.id} className="border p-4 rounded shadow hover:shadow-md transition">
+              <h2 className="text-xl font-semibold">
+                <Link to={`/stories/${story.id}`} className="text-blue-600 hover:underline">
+                  {story.title}
+                </Link>
+              </h2>
+              <p className="text-gray-600">By {story.byline}</p>
+              <p className="mt-2 text-gray-800">{story.synopsis}</p>
+            </div>
+          ))}
+        </div>
+      </Container>
+    </AppShell>
   );
 }
