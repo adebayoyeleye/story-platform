@@ -418,10 +418,30 @@ export function WriterStoryScreen() {
 
   return (
     <Container className="grid gap-6">
+      {/* <StoryHeader
+        story={story}
+        error={error}
+        onChangeStatus={updateStoryStatus}
+      /> */}
       <StoryHeader
         story={story}
         error={error}
         onChangeStatus={updateStoryStatus}
+        onChangeTitle={async (nextTitle) => {
+          setError(null)
+          try {
+            const updated = await apiPatchJson<StorySummary>(
+              `/api/v1/content/writer/stories/${storyId}`,
+              { title: nextTitle }
+            )
+            setStory(updated)
+            toast.push({ title: "Title saved", kind: "success" })
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : "Failed to save title"
+            setError(msg)
+            toast.push({ title: msg, kind: "error" })
+          }
+        }}
       />
 
       {storyId && <StatsCard contentType="STORY" contentId={storyId} />}
