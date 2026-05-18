@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.storyplatform</groupId>
 	<artifactId>content-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.2.0</version>
 	<name>content-service</name>
 	<description>Platform for publishing stories</description>
 	<url/>
