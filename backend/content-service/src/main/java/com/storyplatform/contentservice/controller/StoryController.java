@@ -1,5 +1,6 @@
 package com.storyplatform.contentservice.controller;
 
+import com.storyplatform.contentservice.domain.ContentType;
 import com.storyplatform.contentservice.domain.ContributorRole;
 import com.storyplatform.contentservice.domain.Story;
 import com.storyplatform.contentservice.domain.StoryContributor;
@@ -81,8 +82,12 @@ public class StoryController {
     ) {
         String authorId = jwt.getSubject(); // ✅ source of truth
 
-        Story story = new Story(request.title(), authorId, request.synopsis());
+        ContentType type = request.contentType() != null
+                ? request.contentType()
+                : ContentType.STORY_WITH_CHAPTERS;
         
+        Story story = new Story(request.title(), authorId, request.synopsis(), type);
+
         // seed contributors
         story.getContributors().add(new StoryContributor(
                 authorId,
@@ -187,6 +192,7 @@ public class StoryController {
                 story.getTitle(),
                 story.getSynopsis(),
                 story.getStatus(),
+                story.getContentType(),
                 byline,
                 story.getContributors().stream()
                         .map(sc -> new StoryContributorDto(

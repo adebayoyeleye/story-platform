@@ -22,6 +22,7 @@ public class Story {
     private List<StoryContributor> contributors = new ArrayList<>();
     // Optional: cached display string for public UI ("Bayo", "Bayo & Tolu", etc.)
     private String byline;
+    private ContentType contentType;
 
     protected Story() {}
 
@@ -32,6 +33,11 @@ public class Story {
         this.status = StoryStatus.DRAFT;
         this.createdAt = Instant.now();
         this.updatedAt = Instant.now();
+    }
+
+    public Story(String title, String authorId, String synopsis, ContentType contentType) {
+        this(title, authorId, synopsis);
+        this.contentType = contentType;
     }
 
     // getters
@@ -47,6 +53,19 @@ public class Story {
 
     public String getByline() { return byline; }
     public void setByline(String byline) { this.byline = byline; }
+    /**
+     * Defaults to STORY_WITH_CHAPTERS when null so legacy documents
+     * (created before this field existed) round-trip safely. New stories
+     * should always set this explicitly via the constructor.
+     */
+    public ContentType getContentType() {
+        return contentType != null ? contentType : ContentType.STORY_WITH_CHAPTERS;
+    }
+
+    public void setContentType(ContentType contentType) {
+        this.contentType = contentType;
+        this.updatedAt = java.time.Instant.now();
+    }
 
     // controlled mutations
     public void setStatus(StoryStatus status) {
