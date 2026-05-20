@@ -17,14 +17,23 @@ export type StoryContributor = {
   addedAt?: string;
 };
 
+// Optional fields — server may not yet populate. UI handles undefined
+// gracefully via placeholders.
 export type StorySummary = {
   id: string;
   title: string;
   synopsis?: string | null;
   status: StoryStatus;
-  contentType: ContentType;    // NEW: required, server always returns one
+  contentType: ContentType;
   byline?: string | null;
   contributors?: StoryContributor[];
+
+  // NEW: optional for now
+  coverImageUrl?: string | null;     // null/undefined → CoverImage placeholder
+  wordCount?: number | null;         // null/undefined → don't display read-time
+  chapterCount?: number | null;      // null/undefined → don't display chapter count
+  teaser?: string | null;            // for poems: first ~4 lines, server-rendered later
+  updatedAt?: string | null;         // ISO string; for "Updated 3 days ago"
 };
 
 export type ChapterSummary = {

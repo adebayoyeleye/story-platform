@@ -79,3 +79,30 @@ state + mutations, leaving the screen to compose presentation components.
 
 **Trigger:** before adding autosave (Feature in main roadmap), since
 autosave will balloon this file further.
+
+---
+
+## P-CARD-FIELDS — Populate optional card-display fields on `StoryResponseDto`
+
+**Why deferred:** UI tolerates undefined for `coverImageUrl`, `wordCount`,
+`chapterCount`, `teaser`, `updatedAt`. Adding them server-side requires
+Chapter aggregation queries that don't exist yet. For Phase 1, placeholders
+cover the gap.
+
+**Trigger:** when card meta rows start looking bare, or when we add
+search/sort by length.
+
+---
+
+## P-LANE-API — Lane-specific story endpoints
+
+**Why deferred:** homepage currently fetches one page and partitions
+client-side. Works fine ≤ 50 items per type. Beyond that, lanes need
+their own server-side queries with type filter + paging.
+
+**Trigger:** when total stories per type approaches 50, or when any
+lane needs sort-by-trending/by-new beyond stream order.
+
+**Shape:** `GET /api/v1/content/stories?contentType=POEM&page=0&size=12`
+backed by an index on `contentType`. Aggregate "trending" needs a
+separate read model fed by analytics.

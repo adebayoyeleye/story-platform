@@ -1,103 +1,117 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import type { StorySummary } from '../types';
-import { apiGet } from '@/api/http';
-import { Container } from '@/components/layout/Container';
-import { AppShell } from '@/components/layout/AppShell';
+import { AppShell } from "@/components/layout/AppShell"
+import { Container } from "@/components/layout/Container"
+import { Lane } from "@/components/lanes/Lane"
+import { StoryCard } from "@/components/cards/StoryCard"
+import { BRAND } from "@/lib/brand"
+import { CONTENT_TYPE_META, CONTENT_TYPE_ORDER } from "@/lib/contentType"
+import { useDiscoveryFeed } from "@/features/discovery/useDiscoveryFeed"
 
-export default function Home() {
-  const [stories, setStories] = useState<StorySummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    (async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const data = await apiGet<any>(`/api/v1/content/stories?page=${page}&size=10`);
-        if (cancelled) return;
-
-        setStories(data.content ?? []);
-
-        const totalPages =
-          data?.page?.totalPages ?? data?.totalPages ?? (data?.page?.totalElements ? 1 : undefined);
-
-        if (typeof totalPages === 'number') {
-          setHasNext(page + 1 < totalPages);
-        } else {
-          setHasNext(data?.last === false);
-        }
-      } catch (err: unknown) {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : 'Failed to load stories');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [page]);
-
-  if (loading) {
-    return (
-      <AppShell>
-        <Container>Loading stories...</Container>
-      </AppShell>
-    );
-  }
-
-  if (error) {
-    return (
-      <AppShell>
-        <Container className="text-red-600">{error}</Container>
-      </AppShell>
-    );
-  }
+export default function HomePage() {
+  const feed = useDiscoveryFeed()
 
   return (
     <AppShell>
-      <Container>
-        <div className="grid gap-4">
-          <div className="flex gap-3 mt-6">
-            <button
-              className="border px-3 py-2 rounded disabled:opacity-50"
-              onClick={() => setPage((p) => Math.max(0, p - 1))}
-              disabled={page === 0}
-            >
-              Prev
-            </button>
-            <button
-              className="border px-3 py-2 rounded disabled:opacity-50"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={!hasNext}
-            >
-              Next
-            </button>
+      <Hero />
+
+      <Container className="space-y-12 mt-4 mb-16">
+        {feed.loading && <FeedSkeleton />}
+
+        {feed.error && (
+          <div role="alert" className="text-error text-sm">
+            {feed.error}
           </div>
+        )}
 
-          {stories.length === 0 && (
-            <div className="text-gray-600">No published stories yet.</div>
-          )}
+        {!feed.loading && !feed.error && feed.all.length === 0 && (
+          <div className="text-muted-foreground text-center py-12">
+            Nothing published yet. Be the first to write something.
+          </div>
+        )}
 
-          {stories.map(story => (
-            <div key={story.id} className="border p-4 rounded shadow hover:shadow-md transition">
-              <h2 className="text-xl font-semibold">
-                <Link to={`/stories/${story.id}`} className="text-blue-600 hover:underline">
-                  {story.title}
-                </Link>
-              </h2>
-              <p className="text-gray-600">By {story.byline}</p>
-              <p className="mt-2 text-gray-800">{story.synopsis}</p>
-            </div>
-          ))}
-        </div>
+        {!feed.loading &&
+          !feed.error &&
+          CONTENT_TYPE_ORDER.map((type) => {
+            const stories = feed.byType[type]
+            if (stories.length === 0) return null
+
+            const meta = CONTENT_TYPE_META[type]
+            return (
+              <Lane
+                key={type}
+                title={pluralLabel(type)}
+                subtitle={meta.description}
+                // Type-filtered listing page is a placeholder route for now
+                viewAllHref={`/discover/${type.toLowerCase()}`}
+              >
+                {stories.slice(0, 12).map((s) => (
+                  <StoryCard
+                    key={s.id}
+                    story={s}
+                    // Width controlled here, not in the card itself,
+                    // so the card stays width-agnostic and reusable
+                    className="w-56 md:w-64"
+                  />
+                ))}
+              </Lane>
+            )
+          })}
       </Container>
     </AppShell>
-  );
+  )
+}
+
+// ---------- subcomponents ----------
+
+function Hero() {
+  return (
+    <section className="border-b border-border bg-surface">
+      <Container className="py-12 md:py-16">
+        <h1 className="font-display text-4xl md:text-5xl tracking-tight mb-3">
+          Welcome to {BRAND.name}.
+        </h1>
+        <p className="text-lg text-muted-foreground max-w-xl">
+          {BRAND.tagline}
+        </p>
+      </Container>
+    </section>
+  )
+}
+
+function FeedSkeleton() {
+  // Four lanes' worth of skeleton placeholders. Pulses via the global
+  // animation rule; reduced-motion users see static blocks.
+  return (
+    <div className="space-y-12">
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="space-y-3">
+          <div className="h-7 w-40 bg-surface-muted rounded animate-pulse" />
+          <div className="flex gap-4 overflow-hidden">
+            {[0, 1, 2, 3, 4].map((j) => (
+              <div
+                key={j}
+                className="w-56 md:w-64 shrink-0 space-y-2"
+              >
+                <div className="aspect-[3/4] bg-surface-muted rounded-md animate-pulse" />
+                <div className="h-4 w-3/4 bg-surface-muted rounded animate-pulse" />
+                <div className="h-3 w-1/2 bg-surface-muted rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function pluralLabel(type: import("@/types").ContentType): string {
+  switch (type) {
+    case "STORY_WITH_CHAPTERS":
+      return "Serialised stories"
+    case "SHORT_STORY":
+      return "Short stories"
+    case "ARTICLE":
+      return "Articles"
+    case "POEM":
+      return "Poems"
+  }
 }

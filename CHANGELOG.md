@@ -11,6 +11,16 @@ Pre-1.0 means the API is unstable and may break without warning. After
 ## [Unreleased]
 
 ### Added
+- `StoryCard`, `Lane`, `useDiscoveryFeed`, `lib/text.ts`
+- Homepage redesign: hero band + four content-type lanes
+- BACKLOG.md for deferred work (seeded with P-NAME, P-VT, P-PRELOAD,
+  P-FOCUS-TRAP, P-EDITOR-REFACTOR, P-LANE-API, P-CARD-FIELDS)
+
+### Changed
+- `StorySummary` extended with optional `coverImageUrl`, `wordCount`,
+  `chapterCount`, `teaser`, `updatedAt`
+
+### Added
 - Brand identity: Arokoverse (`lib/brand.ts`) wired into AppShell + title tag
 - CHANGELOG.md + SemVer adoption across `package.json` and both `pom.xml`
 - `useDebouncedCallback` hook (ref-based, stable, auto-cleanup)
