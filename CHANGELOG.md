@@ -11,7 +11,21 @@ Pre-1.0 means the API is unstable and may break without warning. After
 ## [Unreleased]
 
 ### Added
-- (next features land here)
+- Brand identity: Arokoverse (`lib/brand.ts`) wired into AppShell + title tag
+- CHANGELOG.md + SemVer adoption across `package.json` and both `pom.xml`
+- `useDebouncedCallback` hook (ref-based, stable, auto-cleanup)
+- `EditableStoryTitle` — auto-focus on `Untitled`, debounced save
+
+### Changed
+- `StoryService.createForAuthor` owns full creation policy (contentType
+  default, OWNER seed, byline computation, save). Controller is now a
+  thin transport→primitives shim.
+- `StoryHeader` recomposed around the inline-editable title; status +
+  content-type badges below.
+
+### Removed
+- Duplicate title input from `StorySettingsPanel` — single source of truth
+  is now the headline.
 
 ## [0.2.0] - 2026-05-18
 
