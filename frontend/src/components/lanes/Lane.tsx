@@ -4,11 +4,12 @@ import { cn } from "@/lib/cn"
 
 type Props = {
   title: string
-  /** Optional "view all" destination. Hidden when omitted. */
+  /** Visual register for the title. "serif" for content lanes (the default),
+      "mono" for utility lanes like Continue Reading where the title is more
+      label than headline. */
+  headerStyle?: "serif" | "mono"
   viewAllHref?: string
-  /** Optional subtitle line under the title. */
   subtitle?: string
-  /** The cards. Caller is responsible for keying them. */
   children: React.ReactNode
   className?: string
 }
@@ -26,6 +27,7 @@ type Props = {
  */
 export function Lane({
   title,
+  headerStyle = "serif",
   viewAllHref,
   subtitle,
   children,
@@ -41,9 +43,15 @@ export function Lane({
     <section className={cn("space-y-3", className)}>
       <div className="flex items-end justify-between gap-4 px-1">
         <div>
-          <h2 className="font-display text-2xl tracking-tight">{title}</h2>
-          {subtitle && (
-            <p className="text-sm text-muted-foreground">{subtitle}</p>
+          {headerStyle === "serif" ? (
+            <h2 className="font-display text-2xl tracking-tight">{title}</h2>
+          ) : (
+            <h2 className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold">
+              {title}
+            </h2>
+          )}
+          {subtitle && headerStyle === "serif" && (
+            <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
           )}
         </div>
 

@@ -34,6 +34,8 @@ export type StorySummary = {
   chapterCount?: number | null;      // null/undefined → don't display chapter count
   teaser?: string | null;            // for poems: first ~4 lines, server-rendered later
   updatedAt?: string | null;         // ISO string; for "Updated 3 days ago"
+  deck?: string | null;  // article subtitle ("dek" in journalism). Article cards
+                         // prefer this over synopsis for the preview line.
 };
 
 export type ChapterSummary = {

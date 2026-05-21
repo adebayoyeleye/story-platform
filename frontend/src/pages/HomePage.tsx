@@ -5,6 +5,7 @@ import { StoryCard } from "@/components/cards/StoryCard"
 import { BRAND } from "@/lib/brand"
 import { CONTENT_TYPE_META, CONTENT_TYPE_ORDER } from "@/lib/contentType"
 import { useDiscoveryFeed } from "@/features/discovery/useDiscoveryFeed"
+import { Button } from "@/components/ui/Button"
 
 export default function HomePage() {
   const feed = useDiscoveryFeed()
@@ -47,9 +48,6 @@ export default function HomePage() {
                   <StoryCard
                     key={s.id}
                     story={s}
-                    // Width controlled here, not in the card itself,
-                    // so the card stays width-agnostic and reusable
-                    className="w-56 md:w-64"
                   />
                 ))}
               </Lane>
@@ -65,13 +63,20 @@ export default function HomePage() {
 function Hero() {
   return (
     <section className="border-b border-border bg-surface">
-      <Container className="py-12 md:py-16">
-        <h1 className="font-display text-4xl md:text-5xl tracking-tight mb-3">
-          Welcome to {BRAND.name}.
+      <Container className="py-12 md:py-20">
+        <div className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground font-semibold mb-4">
+          A quiet home for long reading
+        </div>
+        <h1 className="font-display text-4xl md:text-6xl leading-[1.05] tracking-tight max-w-3xl mb-4">
+          Serialised novels, short stories,<br className="hidden md:inline" /> articles &amp; poems — all under one roof.
         </h1>
-        <p className="text-lg text-muted-foreground max-w-xl">
-          {BRAND.tagline}
+        <p className="text-base md:text-lg text-muted-foreground max-w-xl mb-6">
+          {BRAND.tagline} Independent publishing, writer-owned.
         </p>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="primary">Start reading</Button>
+          <Button variant="ghost">What is {BRAND.name}?</Button>
+        </div>
       </Container>
     </section>
   )

@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom"
 import type { StorySummary } from "@/types"
-import { CONTENT_TYPE_META } from "@/lib/contentType"
 import { CoverImage } from "@/components/CoverImage"
 import { UserAvatar } from "@/components/Avatar"
 import {
@@ -9,6 +8,30 @@ import {
   teaserFromHtml,
 } from "@/lib/text"
 import { cn } from "@/lib/cn"
+
+import type { ContentType } from "@/types"
+import { TypeBadge } from "../TypeBadge"
+
+/**
+ * Per-type sizing rules. Lives next to StoryCard rather than in
+ * lib/contentType.ts because it's a card-layout concern, not a domain
+ * concept — a future grid/list/hero variant might want different sizes.
+ *
+ * Aspect ratios picked from design mocks:
+ *   Serial:  3:4 portrait (book-jacket feel)
+ *   Short:   3:2 wide
+ *   Article: 16:9 wide (hero photo feel)
+ *   Poem:    none (text preview replaces cover)
+ */
+const CARD_LAYOUT: Record<
+  ContentType,
+  { width: string; coverAspect: string | null }
+> = {
+  STORY_WITH_CHAPTERS: { width: "w-52 md:w-56", coverAspect: "aspect-[3/4]" },
+  SHORT_STORY:         { width: "w-56 md:w-60", coverAspect: "aspect-[3/2]" },
+  ARTICLE:             { width: "w-72 md:w-80", coverAspect: "aspect-video" },
+  POEM:                { width: "w-60 md:w-64", coverAspect: null },
+}
 
 type Props = {
   story: StorySummary
@@ -26,7 +49,7 @@ type Props = {
  * a single layout in one place; per-type branches are isolated.
  */
 export function StoryCard({ story, intent = "read", className }: Props) {
-  const meta = CONTENT_TYPE_META[story.contentType]
+  const layout = CARD_LAYOUT[story.contentType]
   const isPoem = story.contentType === "POEM"
 
   const href = intent === "write" ? `/write/stories/${story.id}` : `/stories/${story.id}`
@@ -38,34 +61,23 @@ export function StoryCard({ story, intent = "read", className }: Props) {
         "group block rounded-lg border border-border bg-surface overflow-hidden",
         "hover:border-primary/40 hover:shadow-sm transition-all",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background",
+        layout.width,
         className
       )}
     >
-      {/* Poem cards lead with a text teaser, not a full cover.
-          Other cards lead with the cover (uploaded or generated). */}
-      {isPoem ? (
-        <PoemPreview story={story} />
-      ) : (
-        <CardCover story={story} />
-      )}
+      {isPoem
+        ? <PoemPreview story={story} />
+        : <CardCover story={story} aspect={layout.coverAspect!} />}
 
       <div className="p-4">
-        <div className="flex items-baseline gap-2 mb-1">
-          <span
-            className="text-xs text-muted-foreground inline-flex items-center gap-1"
-            title={meta.description}
-          >
-            <span aria-hidden="true">{meta.icon}</span>
-            {meta.shortLabel}
-          </span>
-        </div>
+        <TypeBadge type={story.contentType} className="mb-2" />
 
-        <h3 className="font-semibold text-lg leading-tight mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="font-serif font-semibold text-lg leading-tight mb-1 line-clamp-2 group-hover:text-primary transition-colors">
           {story.title}
         </h3>
 
         <Byline story={story} />
-
+        <CardPreviewText story={story} />
         <CardMeta story={story} />
       </div>
     </Link>
@@ -74,34 +86,29 @@ export function StoryCard({ story, intent = "read", className }: Props) {
 
 // ---------- subcomponents ----------
 
-function CardCover({ story }: { story: StorySummary }) {
+// CardCover takes the aspect from the parent now:
+function CardCover({ story, aspect }: { story: StorySummary; aspect: string }) {
   if (story.coverImageUrl) {
-    return (
-      <img
-        src={story.coverImageUrl}
-        alt=""
-        className="w-full aspect-[3/4] object-cover"
-      />
-    )
+    return <img src={story.coverImageUrl} alt="" className={cn("w-full object-cover", aspect)} />
   }
-  return <CoverImage seed={story.id} title={story.title} className="aspect-[3/4]" />
+  return <CoverImage seed={story.id} title={story.title} className={aspect} />
 }
 
+
 function PoemPreview({ story }: { story: StorySummary }) {
-  // Poems: prefer the server-rendered `teaser` if present (already
-  // line-aware), else fall back to deriving from synopsis. We deliberately
-  // do NOT show a full cover — design doc §4.1 calls this out.
   const previewText = (story.teaser ?? story.synopsis ?? "").trim()
 
   return (
-    <div className="px-5 pt-5 pb-2 min-h-[160px] font-serif text-base text-foreground whitespace-pre-wrap overflow-hidden">
-      <div className="line-clamp-4">
-        {previewText || (
-          <span className="text-muted-foreground italic">
-            A new poem, untitled.
-          </span>
-        )}
-      </div>
+    <div className="relative h-44 px-5 pt-5 overflow-hidden font-serif text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+      {previewText || (
+        <span className="text-muted-foreground italic">A new poem, untitled.</span>
+      )}
+      {/* Bottom fade — preserves last-line dignity rather than hard-cropping mid-letter.
+          Pure CSS gradient overlay; respects light/dark via the surface token. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-surface to-transparent"
+      />
     </div>
   )
 }
@@ -113,6 +120,24 @@ function Byline({ story }: { story: StorySummary }) {
       <UserAvatar seed={name} name={name} size="xs" />
       <span className="truncate">by {name}</span>
     </div>
+  )
+}
+
+function CardPreviewText({ story }: { story: StorySummary }) {
+  // Poem cards already lead with the verse; don't duplicate.
+  if (story.contentType === "POEM") return null
+
+  // Articles prefer the deck (a curated subtitle the writer chose);
+  // fall back to synopsis. Everything else uses synopsis.
+  const text =
+    story.contentType === "ARTICLE"
+      ? (story.deck ?? story.synopsis ?? "")
+      : (story.synopsis ?? "")
+
+  if (!text) return null
+
+  return (
+    <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{text}</p>
   )
 }
 
