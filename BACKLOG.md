@@ -106,3 +106,18 @@ lane needs sort-by-trending/by-new beyond stream order.
 **Shape:** `GET /api/v1/content/stories?contentType=POEM&page=0&size=12`
 backed by an index on `contentType`. Aggregate "trending" needs a
 separate read model fed by analytics.
+
+---
+
+## P-SCROLL-TIMELINE — Native scroll-timeline reading-progress bar
+
+**Why deferred:** rAF-based progress works on every browser today. Native
+`scroll-timeline` is GPU-cheap but support is uneven (Safari 26+ only).
+Current implementation is 15 lines and fine.
+
+**Trigger:** when Lighthouse flags layout shift from the progress bar,
+or when we want scroll-pinned animations (chapter dot indicators) that
+need the same timeline.
+
+---
+

@@ -160,10 +160,12 @@
   /* Type controller only — never adds width rules. Orthogonal to .reading-width. */
   .story-richtext {
     @apply font-serif text-foreground;
-    font-size: var(--text-read-body);
+    /* Falls back to the design-system default if the page doesn't set
+      a reader-preference variable. */
+    font-size: var(--reading-body-size, var(--text-read-body));
     line-height: var(--text-read-body--line-height);
   }
-
+  
   .story-richtext p          { @apply mb-6; }
   .story-richtext p:last-child { @apply mb-0; }
 
