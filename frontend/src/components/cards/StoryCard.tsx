@@ -52,7 +52,17 @@ export function StoryCard({ story, intent = "read", className }: Props) {
   const layout = CARD_LAYOUT[story.contentType]
   const isPoem = story.contentType === "POEM"
 
-  const href = intent === "write" ? `/write/stories/${story.id}` : `/stories/${story.id}`
+  const href = (() => {
+    if (intent === "write") return `/write/stories/${story.id}`
+
+    // Standalone types skip the detail page — there are no chapters to
+    // list, and the work IS the body. Click straight into reading.
+    if (story.contentType !== "STORY_WITH_CHAPTERS") {
+      return `/stories/${story.id}/read`
+    }
+
+    return `/stories/${story.id}`
+  })()
 
   return (
     <Link
