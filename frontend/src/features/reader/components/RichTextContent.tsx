@@ -14,7 +14,7 @@ export function RichTextContent({ html }: Props) {
 
   return (
     <div
-      className="story-richtext text-base leading-7 text-foreground"
+      className="story-richtext"
       dangerouslySetInnerHTML={{ __html: sanitized }}
     />
   )
