@@ -121,3 +121,38 @@ need the same timeline.
 
 ---
 
+## P-PUBLISH — Real publish action
+
+**Why deferred:** current Publish button just saves the draft (status
+stays DRAFT). Real publish needs:
+  - confirm dialog ("This will make your work visible to everyone")
+  - server-side transition Draft→Published with timestamp
+  - distinct visual state for published chapters in the sidebar
+  - undo within a 60s window (per design doc §6.5 retry pattern)
+  - for chaptered stories: per-chapter publish, not per-work
+
+**Trigger:** writer editor refactor (next planned feature).
+
+---
+
+## P-RULES-API — Server-driven content-type rules
+
+**Why deferred:** allowed statuses per content type live in TS and Java
+in parallel. Acceptable while there's one developer and the rule is
+stable. Worth converging via `GET /api/v1/content/content-types` once
+either source starts changing or a second developer joins.
+
+---
+
+## P-STATUS-MIGRATE — One-time cleanup of invalid status values
+
+**Why deferred:** no real users yet, no need. Eventual fix: a Mongo
+script that maps each Story's status against ContentType.allowedStatuses
+and forces ARCHIVED for invalid combinations (or PUBLISHED for non-
+chaptered ONGOING). Run once, ever.
+
+**Trigger:** before first production deploy, if legacy data has
+non-conforming statuses.
+
+---
+

@@ -1,5 +1,8 @@
 package com.storyplatform.contentservice.domain;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 /**
  * Discriminates the four kinds of works the platform hosts.
  *
@@ -23,5 +26,33 @@ public enum ContentType {
     STORY_WITH_CHAPTERS,
     SHORT_STORY,
     ARTICLE,
-    POEM
+    POEM;
+
+    /**
+     * Which lifecycle states are valid for this content type.
+     *
+     * Serialised stories have a real lifecycle (DRAFT → ONGOING → COMPLETED).
+     * Standalone works (short story, article, poem) are a binary —
+     * a writer is either drafting or has published; there's no "ongoing
+     * poem" because the work is complete by definition once a reader
+     * sees it. ARCHIVED is universal (writer-initiated retirement).
+     *
+     * Single source of truth — frontend reads this via the validation
+     * layer, never reimplements it.
+     */
+    public Set<StoryStatus> allowedStatuses() {
+        return switch (this) {
+            case STORY_WITH_CHAPTERS -> EnumSet.of(
+                    StoryStatus.DRAFT,
+                    StoryStatus.ONGOING,
+                    StoryStatus.COMPLETED,
+                    StoryStatus.ARCHIVED
+            );
+            case SHORT_STORY, ARTICLE, POEM -> EnumSet.of(
+                    StoryStatus.DRAFT,
+                    StoryStatus.PUBLISHED,
+                    StoryStatus.ARCHIVED
+            );
+        };
+    }
 }

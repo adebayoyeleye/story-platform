@@ -1,4 +1,4 @@
-export type StoryStatus = 'DRAFT' | 'ONGOING' | 'COMPLETED' | 'ARCHIVED';
+export type StoryStatus = 'DRAFT' | 'ONGOING' | 'COMPLETED' | 'PUBLISHED' | 'ARCHIVED';
 export type ChapterStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 export type ContentFormat = 'PLAIN_TEXT' | 'RICH_TEXT_HTML';
 

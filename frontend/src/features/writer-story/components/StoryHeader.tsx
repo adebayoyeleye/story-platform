@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import type { StorySummary } from "@/types"
-import { CONTENT_TYPE_META } from "@/lib/contentType"
+import { ALLOWED_STATUSES, CONTENT_TYPE_META, STATUS_LABEL } from "@/lib/contentType"
 import { EditableStoryTitle } from "./EditableStoryTitle"
 
 type Props = {
@@ -32,14 +32,14 @@ export function StoryHeader({
             {typeMeta.label}
           </span>
           <span className="rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">
-            {story.status}
+            {STATUS_LABEL[story.status]}
           </span>
         </div>
 
         <div className="mt-2 text-sm text-muted-foreground">
           By <span className="text-foreground font-medium">{story.byline ?? "—"}</span>
         </div>
-
+    
         <div className="mt-4 flex items-center gap-2">
           <label className="text-sm text-muted-foreground">Status:</label>
           <select
@@ -47,10 +47,11 @@ export function StoryHeader({
             value={story.status}
             onChange={(e) => onChangeStatus(e.target.value as StorySummary["status"])}
           >
-            <option value="DRAFT">DRAFT</option>
-            <option value="ONGOING">ONGOING</option>
-            <option value="COMPLETED">COMPLETED</option>
-            <option value="ARCHIVED">ARCHIVED</option>
+            {ALLOWED_STATUSES[story.contentType].map((status) => (
+              <option key={status} value={status}>
+                {STATUS_LABEL[status]}
+              </option>
+            ))}
           </select>
         </div>
 

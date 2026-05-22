@@ -146,6 +146,13 @@ public class StoryServiceImpl implements StoryService {
             throw new IllegalArgumentException("Invalid story status transition: " + current + " -> " + status);
         }
 
+        // Domain invariant: status must be valid for this content type.
+        if (!story.getContentType().allowedStatuses().contains(status)) {
+            throw new IllegalArgumentException(
+                    "Status " + status + " is not valid for " + story.getContentType()
+            );
+        }
+
         story.setStatus(status);
         return storyRepository.save(story);
     }

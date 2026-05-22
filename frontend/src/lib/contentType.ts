@@ -1,4 +1,4 @@
-import type { ContentType } from "@/types"
+import type { ContentType, StoryStatus } from "@/types"
 
 export type ContentTypeMeta = {
   type: ContentType
@@ -47,3 +47,33 @@ export const CONTENT_TYPE_ORDER: ContentType[] = [
   "ARTICLE",
   "POEM",
 ]
+
+/**
+ * Allowed lifecycle states per content type. MUST match
+ * domain.ContentType.allowedStatuses() on the backend. Convergence is
+ * tracked as P-RULES-API.
+ *
+ * Why this lives next to the icon/label metadata: any UI surface that
+ * lets a user pick a status (writer editor) is the same surface that
+ * shows the type's label. Co-locating the data keeps the import surface
+ * small.
+ */
+export const ALLOWED_STATUSES: Record<ContentType, StoryStatus[]> = {
+  STORY_WITH_CHAPTERS: ["DRAFT", "ONGOING", "COMPLETED", "ARCHIVED"],
+  SHORT_STORY:         ["DRAFT", "PUBLISHED", "ARCHIVED"],
+  ARTICLE:             ["DRAFT", "PUBLISHED", "ARCHIVED"],
+  POEM:                ["DRAFT", "PUBLISHED", "ARCHIVED"],
+}
+
+/**
+ * Human-readable status labels. Same status value can read differently
+ * depending on context, but we keep it simple for now — one label per
+ * status, used everywhere.
+ */
+export const STATUS_LABEL: Record<StoryStatus, string> = {
+  DRAFT:     "Draft",
+  ONGOING:   "Ongoing",
+  COMPLETED: "Completed",
+  PUBLISHED: "Published",
+  ARCHIVED:  "Archived",
+}
