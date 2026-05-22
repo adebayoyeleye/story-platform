@@ -11,6 +11,47 @@ Pre-1.0 means the API is unstable and may break without warning. After
 ## [Unreleased]
 
 ### Added
+- Status-aware `allowedStatuses()` on `ContentType` (backend) +
+  `ALLOWED_STATUSES` mirror (frontend)
+- `STATUS_LABEL` map for human-readable status display
+- `StoryStatus.PUBLISHED` for standalone works
+
+### Changed
+- `StoryDetailPage` rebuilt on the design system (cover column +
+  type badge + serif title + chapter list with mono ordinals).
+  Standalone types now redirect to `/stories/:id/read`.
+- Status select in `StoryHeader` is data-driven and shows nicer labels.
+
+### Backlog added
+- P-PUBLISH, P-RULES-API, P-STATUS-MIGRATE
+
+### Changed
+- `StoryStatus` lifecycle now type-aware. `ONGOING`/`COMPLETED` are
+  chaptered-only; standalone works use `PUBLISHED`. Backend rejects
+  invalid combinations.
+- New `StoryStatus.PUBLISHED` value.
+
+### Backlog added
+- P-PUBLISH (real publish action — current Publish button only saves)
+- P-RULES-API (converge backend/frontend status rules behind an endpoint)
+- P-STATUS-MIGRATE (one-time data cleanup if needed pre-launch)
+
+### Added
+- `ReadingShell`, `ReadingHeader`, `ReadingProgress`, `ChapterPager`,
+  `PoemBody`, `useReadingSize`
+- `StandaloneReadPage` at `/stories/:storyId/read` for SHORT_STORY,
+  ARTICLE, POEM
+- Reading-page type-size cycler (18/20/22 px), persisted
+
+### Changed
+- `ChapterReadPage` rewritten on `ReadingShell`
+- `StoryCard`: standalone types link directly to `/stories/:id/read`
+- `RichTextContent`: removed conflicting font-size utilities
+
+### Backlog
+- P-SCROLL-TIMELINE — native scroll-timeline progress bar
+
+### Added
 - `StoryCard`, `Lane`, `useDiscoveryFeed`, `lib/text.ts`
 - Homepage redesign: hero band + four content-type lanes
 - BACKLOG.md for deferred work (seeded with P-NAME, P-VT, P-PRELOAD,
