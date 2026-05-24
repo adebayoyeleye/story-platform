@@ -11,6 +11,17 @@ Pre-1.0 means the API is unstable and may break without warning. After
 ## [Unreleased]
 
 ### Added
+- `useWriterStory` hook — owns editor server-state
+- `WriterShell` component — minimal editor chrome
+- `SaveState` discriminated union
+
+### Changed
+- Editor layout: top mini-bar + optional chapter sidebar (chaptered only)
+- "Publish" button labelled "Save" (real publish backlogged as P-PUBLISH)
+- StorySettingsPanel + ContributorsPanel moved behind a collapsible
+  until they become a slide-over (next turn)
+
+### Added
 - Status-aware `allowedStatuses()` on `ContentType` (backend) +
   `ALLOWED_STATUSES` mirror (frontend)
 - `STATUS_LABEL` map for human-readable status display

@@ -156,3 +156,18 @@ non-conforming statuses.
 
 ---
 
+## P-AUTOSAVE-DEDUPE — Skip revision creation on substantively-identical saves
+
+**Why deferred:** current autosave creates a new ContentRevision on every
+debounced flush. Pause-type-pause-type → many revisions. Storage cost
+grows fast for long sessions.
+
+**Shape of fix:** server-side compare incoming content hash with the
+last revision's hash; if identical, no-op the revision row but still
+update the chapter's content/updatedAt. Cheap, idempotent, invisible
+to the writer.
+
+**Trigger:** the next autosave hardening pass.
+
+---
+

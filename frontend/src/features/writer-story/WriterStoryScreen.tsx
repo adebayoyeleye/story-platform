@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link, useParams } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import {
   apiDelete,
   ApiError,
@@ -11,13 +11,12 @@ import {
 } from "@/api/http"
 import type {
   Chapter,
-  ChapterSummary,
   ContributorRole,
   StoryContributor,
   StorySummary,
 } from "@/types"
 import { apiGetUserByEmail } from "@/auth/authApi"
-import { Container } from "@/components/layout/Container"
+import { Button } from "@/components/ui/Button"
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog"
 import { useToast } from "@/components/ui/ToastHost"
 
@@ -29,84 +28,80 @@ import { ChapterEditorPanel } from "./components/ChapterEditorPanel"
 import { toEditorHtml } from "./components/editorContent"
 import { StatsCard } from "@/features/analytics/components/StatsCard"
 
+import { useWriterStory } from "./useWriterStory"
+import { WriterShell, type SaveState } from "./components/WriterShell"
+import { approxWordCount } from "@/lib/text"
+
 export function WriterStoryScreen() {
   const { storyId } = useParams()
-
   const toast = useToast()
 
-  const [story, setStory] = useState<StorySummary | null>(null)
-  const [chapters, setChapters] = useState<ChapterSummary[]>([])
-  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null)
+  // -------- Server state via the hook (story + chapter list) --------
+  const writerStory = useWriterStory(storyId)
+  const { story, chapters, loading, error: loadError } = writerStory
+  const { reload, patchStory, changeStatus } = writerStory.actions
 
-  const [error, setError] = useState<string | null>(null)
+  // -------- Page-level error (separate from load error) --------
+  const [pageError, setPageError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
-  // editor state
+  // -------- Currently-opened chapter (editor target) --------
+  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null)
+
+  // -------- Editor body state --------
   const [newTitle, setNewTitle] = useState("")
   const [newContent, setNewContent] = useState("")
   const [isDirty, setIsDirty] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [saveState, setSaveState] = useState<SaveState>({ status: "idle" })
 
-  // confirm switching chapters
+  // -------- Confirm dialog for switching chapters with unsaved edits --------
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [pendingChapterId, setPendingChapterId] = useState<string | null>(null)
 
-  // meta editing
+  // -------- Story-meta panel state --------
   const [editTitle, setEditTitle] = useState("")
   const [editSynopsis, setEditSynopsis] = useState("")
   const [editOwnerPenName, setEditOwnerPenName] = useState("")
 
-  // contributors
+  // -------- Contributor add-form state --------
   const [newContributorEmail, setNewContributorEmail] = useState("")
   const [newContributorRole, setNewContributorRole] =
     useState<ContributorRole>("CO_AUTHOR")
   const [newContributorPenName, setNewContributorPenName] = useState("")
   const [isAddingContributor, setIsAddingContributor] = useState(false)
 
-  // disable publish/archive/restore while saving (and show per-row busy)
+  // -------- Per-row chapter-action busy id --------
   const [chapterActionId, setChapterActionId] = useState<string | null>(null)
 
-  const canEdit = 
-  selectedChapter?.status === "DRAFT" || 
-  selectedChapter?.status === "PUBLISHED"
+  // -------- Sync meta form when the story loads/changes --------
+  useEffect(() => {
+    if (!story) return
+    setEditTitle(story.title)
+    setEditSynopsis(story.synopsis ?? "")
+    setEditOwnerPenName("")
+  }, [story])
 
+  // -------- Derived: word count for the top bar --------
+  const wordCount = useMemo(
+    () => approxWordCount(newContent),
+    [newContent]
+  )
+
+  // -------- Derived: next chapter number --------
   const nextChapterNumber = useMemo(() => {
     if (chapters.length === 0) return 1
     return Math.max(...chapters.map((c) => c.chapterNumber)) + 1
   }, [chapters])
 
-  async function refresh() {
-    if (!storyId) return
-    setError(null)
-    setFieldErrors({})
+  // -------- Derived: can the editor accept input? --------
+  const canEdit =
+    selectedChapter?.status === "DRAFT" ||
+    selectedChapter?.status === "PUBLISHED"
 
-    try {
-      const [s, list] = await Promise.all([
-        apiGet<StorySummary>(`/api/v1/content/writer/stories/${storyId}`),
-        apiGet<any>(
-          `/api/v1/content/writer/stories/${storyId}/chapters?page=0&size=200`
-        ),
-      ])
-
-      setStory(s)
-      setChapters(list.content ?? [])
-
-      // sync meta form
-      setEditTitle(s.title)
-      setEditSynopsis(s.synopsis ?? "")
-      setEditOwnerPenName("") // until DTO includes it
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load")
-    }
-  }
-
-  useEffect(() => {
-    refresh()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storyId])
-
+  // -------- Open a chapter into the editor --------
   async function openChapter(chapterId: string) {
-    setError(null)
+    setPageError(null)
     setFieldErrors({})
     try {
       const full = await apiGet<Chapter>(
@@ -116,8 +111,9 @@ export function WriterStoryScreen() {
       setNewTitle(full.title)
       setNewContent(toEditorHtml(full.content, full.contentFormat))
       setIsDirty(false)
+      setSaveState({ status: "idle" })
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to load chapter")
+      setPageError(err instanceof Error ? err.message : "Failed to load chapter")
     }
   }
 
@@ -130,87 +126,93 @@ export function WriterStoryScreen() {
     openChapter(id)
   }
 
+  // -------- Create a new draft chapter --------
   async function createDraftChapter() {
     if (!storyId) return
-    setError(null)
+    setPageError(null)
     setFieldErrors({})
     try {
       await apiPost(`/api/v1/content/writer/stories/${storyId}/chapters`, {
         title: `Chapter ${nextChapterNumber}`,
         content: "",
-        // content: newContent || "<p></p>",
         contentFormat: "RICH_TEXT_HTML",
         chapterNumber: nextChapterNumber,
       })
       toast.push({ title: "Chapter created", kind: "success" })
-      await refresh()
+      await reload()
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setError(err.message)
+        setPageError(err.message)
         setFieldErrors(err.fieldErrors)
       } else {
-        setError(err instanceof Error ? err.message : "Failed to create chapter")
+        setPageError(err instanceof Error ? err.message : "Failed to create chapter")
       }
       toast.push({ title: "Create chapter failed", kind: "error" })
     }
   }
 
+  // -------- Explicit save (clicked the Save button) --------
   async function saveChapter(publishImmediately: boolean) {
     if (!selectedChapter) return
-
-    setError(null)
+    setPageError(null)
     setFieldErrors({})
     setIsSaving(true)
-
+    setSaveState({ status: "saving" })
     try {
       const updated = await apiPut<Chapter>(
         `/api/v1/content/writer/chapters/${selectedChapter.id}`,
-        { title: newTitle, content: newContent, contentFormat: "RICH_TEXT_HTML", publishImmediately }
+        {
+          title: newTitle,
+          content: newContent,
+          contentFormat: "RICH_TEXT_HTML",
+          publishImmediately,
+        }
       )
-
       setSelectedChapter(updated)
-
       setIsDirty(false)
+      setSaveState({ status: "saved", at: new Date() })
       toast.push({ title: "Saved", kind: "success" })
-
-      await refresh()
+      await reload()
     } catch (err: unknown) {
+      const msg =
+        err instanceof ApiError
+          ? err.message
+          : err instanceof Error
+          ? err.message
+          : "Failed to save"
       if (err instanceof ApiError) {
-        setError(err.message)
         setFieldErrors(err.fieldErrors)
-      } else {
-        setError(err instanceof Error ? err.message : "Failed to save")
       }
+      setPageError(msg)
+      setSaveState({ status: "error", message: msg })
       toast.push({ title: "Save failed", kind: "error" })
     } finally {
       setIsSaving(false)
     }
   }
 
+  // -------- Chapter status transitions --------
   async function setChapterStatus(
     chapterId: string,
     status: "PUBLISHED" | "ARCHIVED"
   ) {
-    // UX: while saving draft/autosave is happening, don't allow status changes
     if (isSaving) return
-
-    setError(null)
+    setPageError(null)
     setFieldErrors({})
     setChapterActionId(chapterId)
-
     try {
       await apiPatchNoContent(
         `/api/v1/content/writer/chapters/${chapterId}/status?status=${status}`
       )
       toast.push({ title: `Chapter ${status.toLowerCase()}`, kind: "success" })
-      await refresh()
+      await reload()
       if (selectedChapter?.id === chapterId) setSelectedChapter(null)
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setError(err.message)
+        setPageError(err.message)
         setFieldErrors(err.fieldErrors)
       } else {
-        setError(
+        setPageError(
           err instanceof Error
             ? err.message
             : `Failed to set chapter status to ${status}`
@@ -222,85 +224,81 @@ export function WriterStoryScreen() {
     }
   }
 
-  async function publishChapter(chapterId: string) {
-    await setChapterStatus(chapterId, "PUBLISHED")
-  }
-  async function archiveChapter(chapterId: string) {
-    await setChapterStatus(chapterId, "ARCHIVED")
-  }
-  async function restoreChapter(chapterId: string) {
-    // restore = publish in your API
-    await setChapterStatus(chapterId, "PUBLISHED")
-  }
+  const publishChapter  = (id: string) => setChapterStatus(id, "PUBLISHED")
+  const archiveChapter  = (id: string) => setChapterStatus(id, "ARCHIVED")
+  const restoreChapter  = (id: string) => setChapterStatus(id, "PUBLISHED")
 
-  async function updateStoryStatus(next: StorySummary["status"]) {
-    if (!storyId) return
-    setError(null)
+  // -------- Story-level status change (via dropdown) --------
+  // Hook owns this; thin wrapper for toast + error capture.
+  async function onChangeStoryStatus(next: StorySummary["status"]) {
+    setPageError(null)
     setFieldErrors({})
     try {
-      const patched = await apiPatchJson<StorySummary>(
-        `/api/v1/content/writer/stories/${storyId}/status?status=${encodeURIComponent(
-          next
-        )}`
-      )
-      setStory(patched)
+      await changeStatus(next)
       toast.push({ title: "Story status updated", kind: "success" })
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setError(err.message)
+        setPageError(err.message)
         setFieldErrors(err.fieldErrors)
       } else {
-        setError(err instanceof Error ? err.message : "Failed to update story")
+        setPageError(err instanceof Error ? err.message : "Failed to update story")
       }
       toast.push({ title: "Update failed", kind: "error" })
     }
   }
 
-  async function handleSaveMeta() {
-    if (!storyId) return
-    setError(null)
-    setFieldErrors({})
+  // -------- Story-level title patch (from EditableStoryTitle) --------
+  async function onChangeStoryTitle(nextTitle: string) {
+    setPageError(null)
+    try {
+      await patchStory({ title: nextTitle })
+      toast.push({ title: "Title saved", kind: "success" })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to save title"
+      setPageError(msg)
+      toast.push({ title: msg, kind: "error" })
+    }
+  }
 
+  // -------- Story meta panel save --------
+  async function handleSaveMeta() {
+    if (!storyId || !story) return
+    setPageError(null)
+    setFieldErrors({})
     try {
       const payload: {
         title?: string
         synopsis?: string
         ownerPenName?: string
       } = {}
-
-      if (editTitle.trim() !== (story?.title ?? "")) payload.title = editTitle.trim()
-      if (editSynopsis !== (story?.synopsis ?? "")) payload.synopsis = editSynopsis
-      if (editOwnerPenName.trim().length > 0) payload.ownerPenName = editOwnerPenName.trim()
-
-      const updated = await apiPatchJson<StorySummary>(
-        `/api/v1/content/writer/stories/${storyId}`,
-        payload
-      )
-      setStory(updated)
+      if (editTitle.trim() !== story.title) payload.title = editTitle.trim()
+      if (editSynopsis !== (story.synopsis ?? "")) payload.synopsis = editSynopsis
+      if (editOwnerPenName.trim().length > 0) {
+        payload.ownerPenName = editOwnerPenName.trim()
+      }
+      await patchStory(payload)
       toast.push({ title: "Saved", kind: "success" })
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setError(err.message)
+        setPageError(err.message)
         setFieldErrors(err.fieldErrors)
       } else {
-        setError(err instanceof Error ? err.message : "Failed to update story")
+        setPageError(err instanceof Error ? err.message : "Failed to update story")
       }
       toast.push({ title: "Save failed", kind: "error" })
     }
   }
 
+  // -------- Contributors --------
   async function addContributor() {
     if (!storyId) return
     if (!newContributorEmail.trim()) return
-
-    setError(null)
+    setPageError(null)
     setFieldErrors({})
     setIsAddingContributor(true)
-
     try {
       const user = await apiGetUserByEmail(newContributorEmail)
-
-      const updated = await apiPost<StorySummary>(
+      await apiPost<StorySummary>(
         `/api/v1/content/writer/stories/${storyId}/contributors`,
         {
           userId: user.id,
@@ -308,18 +306,17 @@ export function WriterStoryScreen() {
           penName: newContributorPenName || null,
         }
       )
-
-      setStory(updated)
       setNewContributorEmail("")
       setNewContributorPenName("")
       setNewContributorRole("CO_AUTHOR")
       toast.push({ title: "Contributor added", kind: "success" })
+      await reload()
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setError(err.message)
+        setPageError(err.message)
         setFieldErrors(err.fieldErrors)
       } else {
-        setError(err instanceof Error ? err.message : "Failed to add contributor")
+        setPageError(err instanceof Error ? err.message : "Failed to add contributor")
       }
       toast.push({ title: "Add contributor failed", kind: "error" })
     } finally {
@@ -333,22 +330,21 @@ export function WriterStoryScreen() {
     penName?: string | null
   ) {
     if (!storyId) return
-    setError(null)
+    setPageError(null)
     setFieldErrors({})
-
     try {
-      const updated = await apiPatchJson<StorySummary>(
+      await apiPatchJson<StorySummary>(
         `/api/v1/content/writer/stories/${storyId}/contributors/${userId}`,
         { role, penName }
       )
-      setStory(updated)
       toast.push({ title: "Contributor updated", kind: "success" })
+      await reload()
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setError(err.message)
+        setPageError(err.message)
         setFieldErrors(err.fieldErrors)
       } else {
-        setError(err instanceof Error ? err.message : "Failed to update contributor")
+        setPageError(err instanceof Error ? err.message : "Failed to update contributor")
       }
       toast.push({ title: "Update failed", kind: "error" })
     }
@@ -356,34 +352,38 @@ export function WriterStoryScreen() {
 
   async function removeContributor(userId: string) {
     if (!storyId) return
-    setError(null)
+    setPageError(null)
     setFieldErrors({})
-
     try {
-      const updated = await apiDelete<StorySummary>(
+      await apiDelete<StorySummary>(
         `/api/v1/content/writer/stories/${storyId}/contributors/${userId}`
       )
-      setStory(updated)
       toast.push({ title: "Contributor removed", kind: "success" })
+      await reload()
     } catch (err: unknown) {
       if (err instanceof ApiError) {
-        setError(err.message)
+        setPageError(err.message)
         setFieldErrors(err.fieldErrors)
       } else {
-        setError(err instanceof Error ? err.message : "Failed to remove contributor")
+        setPageError(err instanceof Error ? err.message : "Failed to remove contributor")
       }
       toast.push({ title: "Remove failed", kind: "error" })
     }
   }
 
-  // autosave (debounced) — declared unconditionally; guarded inside
+  // -------- Autosave (debounced). Guarded on isDirty so we never save
+  // a chapter that the user merely opened. Cleanup cancels the pending
+  // timer on next edit or unmount — no double-saves, no orphan timers. --
   useEffect(() => {
     if (!selectedChapter) return
     if (!canEdit) return
     if (!isDirty) return
 
+    setSaveState({ status: "dirty" })
+
     const t = window.setTimeout(async () => {
       setIsSaving(true)
+      setSaveState({ status: "saving" })
       try {
         await apiPut(`/api/v1/content/writer/chapters/${selectedChapter.id}`, {
           title: newTitle,
@@ -392,8 +392,10 @@ export function WriterStoryScreen() {
           publishImmediately: false,
         })
         setIsDirty(false)
-        toast.push({ title: "Saved", kind: "success" })
-      } catch {
+        setSaveState({ status: "saved", at: new Date() })
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Autosave failed"
+        setSaveState({ status: "error", message: msg })
         toast.push({ title: "Autosave failed", kind: "error" })
       } finally {
         setIsSaving(false)
@@ -401,110 +403,133 @@ export function WriterStoryScreen() {
     }, 900)
 
     return () => window.clearTimeout(t)
-  }, [selectedChapter, canEdit, isDirty, newTitle, newContent, toast])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChapter, canEdit, isDirty, newTitle, newContent])
 
-  // UI (no early returns before hooks above)
-  if (!storyId) {
+  // ============== RENDER ==============
+
+  if (loading) {
     return (
-      <Container>
-        Missing story id. <Link className="text-blue-600 hover:underline" to="/write">Back</Link>
-      </Container>
+      <WriterShell storyTitle="Loading…" saveState={{ status: "idle" }}>
+        <div className="p-8 text-muted-foreground">Loading…</div>
+      </WriterShell>
     )
   }
 
-  if (!story) {
-    return <Container>Loading…</Container>
+  if (loadError || !story) {
+    return (
+      <WriterShell storyTitle="Error" saveState={{ status: "idle" }}>
+        <div className="p-8 text-error" role="alert">
+          {loadError ?? "Story not found"}
+        </div>
+      </WriterShell>
+    )
   }
 
+  const isChaptered = story.contentType === "STORY_WITH_CHAPTERS"
+
   return (
-    <Container className="grid gap-6">
-      {/* <StoryHeader
-        story={story}
-        error={error}
-        onChangeStatus={updateStoryStatus}
-      /> */}
-      <StoryHeader
-        story={story}
-        error={error}
-        onChangeStatus={updateStoryStatus}
-        onChangeTitle={async (nextTitle) => {
-          setError(null)
-          try {
-            const updated = await apiPatchJson<StorySummary>(
-              `/api/v1/content/writer/stories/${storyId}`,
-              { title: nextTitle }
-            )
-            setStory(updated)
-            toast.push({ title: "Title saved", kind: "success" })
-          } catch (err) {
-            const msg = err instanceof Error ? err.message : "Failed to save title"
-            setError(msg)
-            toast.push({ title: msg, kind: "error" })
-          }
-        }}
-      />
-
-      {storyId && <StatsCard contentType="STORY" contentId={storyId} />}
-
-      <StorySettingsPanel
-        byline={story.byline ?? "—"}
-        editTitle={editTitle}
-        setEditTitle={setEditTitle}
-        editSynopsis={editSynopsis}
-        setEditSynopsis={setEditSynopsis}
-        editOwnerPenName={editOwnerPenName}
-        setEditOwnerPenName={setEditOwnerPenName}
-        fieldErrors={fieldErrors}
-        onSave={handleSaveMeta}
-      />
-
-      <ContributorsPanel
-        contributors={(story.contributors ?? []) as StoryContributor[]}
-        fieldErrors={fieldErrors}
-        newContributorEmail={newContributorEmail}
-        setNewContributorEmail={setNewContributorEmail}
-        newContributorPenName={newContributorPenName}
-        setNewContributorPenName={setNewContributorPenName}
-        newContributorRole={newContributorRole}
-        setNewContributorRole={setNewContributorRole}
-        isAddingContributor={isAddingContributor}
-        onAdd={addContributor}
-        onUpdate={updateContributor}
-        onRemove={removeContributor}
-      />
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <ChapterListPanel
-          chapters={chapters}
-          isSaving={isSaving}
-          busyChapterId={chapterActionId}
-          onNewChapter={createDraftChapter}
-          onOpenChapter={requestOpenChapter}
-          onPublish={publishChapter}
-          onArchive={archiveChapter}
-          onRestore={restoreChapter}
+    <WriterShell
+      storyTitle={story.title}
+      saveState={saveState}
+      wordCount={wordCount}
+      primaryAction={
+        <Button
+          size="sm"
+          onClick={() => saveChapter(false)}
+          disabled={!selectedChapter || isSaving}
+        >
+          Save
+        </Button>
+      }
+      sidebar={
+        isChaptered ? (
+          <ChapterListPanel
+            chapters={chapters}
+            isSaving={isSaving}
+            busyChapterId={chapterActionId}
+            onNewChapter={createDraftChapter}
+            onOpenChapter={requestOpenChapter}
+            onPublish={publishChapter}
+            onArchive={archiveChapter}
+            onRestore={restoreChapter}
+          />
+        ) : undefined
+      }
+    >
+      <div className="max-w-3xl mx-auto px-6 py-10">
+        <StoryHeader
+          story={story}
+          error={pageError}
+          onChangeStatus={onChangeStoryStatus}
+          onChangeTitle={onChangeStoryTitle}
         />
 
-        <ChapterEditorPanel
-          storyId={storyId}
-          selectedChapter={selectedChapter}
-          canEdit={canEdit}
-          isDirty={isDirty}
-          isSaving={isSaving}
-          fieldErrors={fieldErrors}
-          newTitle={newTitle}
-          setNewTitle={(v) => {
-            setNewTitle(v)
-            setIsDirty(true)
-          }}
-          newContent={newContent}
-          setNewContent={(v) => {
-            setNewContent(v)
-            setIsDirty(true)
-          }}
-          onSaveChapter={saveChapter}
-          onNewChapter={createDraftChapter}
-        />
+        {storyId && (
+          <div className="mt-6">
+            <StatsCard contentType="STORY" contentId={storyId} />
+          </div>
+        )}
+
+        <div className="mt-10">
+          <ChapterEditorPanel
+            storyId={storyId!}
+            selectedChapter={selectedChapter}
+            canEdit={canEdit}
+            isDirty={isDirty}
+            isSaving={isSaving}
+            fieldErrors={fieldErrors}
+            newTitle={newTitle}
+            setNewTitle={(v) => {
+              setNewTitle(v)
+              setIsDirty(true)
+            }}
+            newContent={newContent}
+            setNewContent={(v) => {
+              setNewContent(v)
+              setIsDirty(true)
+            }}
+            onSaveChapter={saveChapter}
+            onNewChapter={createDraftChapter}
+          />
+        </div>
+
+        {/* Settings + contributors live behind a collapsible until we
+            build a proper slide-over next turn. */}
+        <details className="mt-12 border-t border-border pt-8">
+          <summary className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground cursor-pointer">
+            Story settings &amp; contributors
+          </summary>
+
+          <div className="mt-6 space-y-8">
+            <StorySettingsPanel
+              byline={story.byline ?? "—"}
+              editTitle={editTitle}
+              setEditTitle={setEditTitle}
+              editSynopsis={editSynopsis}
+              setEditSynopsis={setEditSynopsis}
+              editOwnerPenName={editOwnerPenName}
+              setEditOwnerPenName={setEditOwnerPenName}
+              fieldErrors={fieldErrors}
+              onSave={handleSaveMeta}
+            />
+
+            <ContributorsPanel
+              contributors={(story.contributors ?? []) as StoryContributor[]}
+              fieldErrors={fieldErrors}
+              newContributorEmail={newContributorEmail}
+              setNewContributorEmail={setNewContributorEmail}
+              newContributorPenName={newContributorPenName}
+              setNewContributorPenName={setNewContributorPenName}
+              newContributorRole={newContributorRole}
+              setNewContributorRole={setNewContributorRole}
+              isAddingContributor={isAddingContributor}
+              onAdd={addContributor}
+              onUpdate={updateContributor}
+              onRemove={removeContributor}
+            />
+          </div>
+        </details>
       </div>
 
       <ConfirmDialog
@@ -524,6 +549,6 @@ export function WriterStoryScreen() {
           setPendingChapterId(null)
         }}
       />
-    </Container>
+    </WriterShell>
   )
 }
