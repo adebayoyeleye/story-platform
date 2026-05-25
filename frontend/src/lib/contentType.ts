@@ -77,3 +77,33 @@ export const STATUS_LABEL: Record<StoryStatus, string> = {
   PUBLISHED: "Published",
   ARCHIVED:  "Archived",
 }
+
+/**
+ * URL slug ↔ ContentType. The slug is lowercased and dash-separated;
+ * we never expose underscores in URLs (they look unloved).
+ *
+ *   STORY_WITH_CHAPTERS ↔ "serial"
+ *   SHORT_STORY         ↔ "short"
+ *   ARTICLE             ↔ "articles"
+ *   POEM                ↔ "poems"
+ *
+ * Plural slugs because the URL refers to a category, not one item —
+ * /discover/poems reads better than /discover/poem.
+ */
+const SLUG: Record<ContentType, string> = {
+  STORY_WITH_CHAPTERS: "serial",
+  SHORT_STORY:         "short",
+  ARTICLE:             "articles",
+  POEM:                "poems",
+}
+
+export function contentTypeToSlug(type: ContentType): string {
+  return SLUG[type]
+}
+
+export function contentTypeFromSlug(slug: string): ContentType | null {
+  for (const type of CONTENT_TYPE_ORDER) {
+    if (SLUG[type] === slug) return type
+  }
+  return null
+}

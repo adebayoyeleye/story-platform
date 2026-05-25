@@ -8,6 +8,7 @@ import AuthPage from "@/pages/AuthPage"
 import RequireAuth from "@/auth/RequireAuth"
 import { useSiteAnalytics } from "@/hooks/useSiteAnalytics"
 import StandaloneReadPage from "@/pages/StandaloneReadPage"
+import DiscoverTypePage from "@/pages/DiscoverTypePage"
 
 function AnalyticsTracker() {
   useSiteAnalytics()
@@ -23,6 +24,7 @@ export default function AppRouter() {
         <Route path="/stories/:storyId" element={<StoryDetailPage />} />
         <Route path="/chapters/:chapterId" element={<ChapterReadPage />} />
         <Route path="/stories/:storyId/read" element={<StandaloneReadPage />} />
+        <Route path="/discover/:slug" element={<DiscoverTypePage />} />
         <Route path="/auth" element={<AuthPage />} />
 
         <Route

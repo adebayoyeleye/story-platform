@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { apiGet } from "@/api/http"
 import type { ContentType, StorySummary } from "@/types"
 
@@ -67,4 +67,24 @@ export function useDiscoveryFeed(pageSize = 40): DiscoveryFeed {
   }, [pageSize])
 
   return feed
+}
+
+
+/**
+ * Same data as useDiscoveryFeed, narrowed to one content type.
+ * Use on /discover/:type pages — we don't want the homepage paying for
+ * a re-fetch and we don't want the type page paying for partitioning
+ * stories it'll never show.
+ */
+export function useTypeFeed(
+  type: ContentType,
+  pageSize = 60
+): {
+  loading: boolean
+  error: string | null
+  stories: StorySummary[]
+} {
+  const feed = useDiscoveryFeed(pageSize)
+  const stories = useMemo(() => feed.byType[type], [feed.byType, type])
+  return { loading: feed.loading, error: feed.error, stories }
 }

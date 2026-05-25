@@ -3,7 +3,7 @@ import { Container } from "@/components/layout/Container"
 import { Lane } from "@/components/lanes/Lane"
 import { StoryCard } from "@/components/cards/StoryCard"
 import { BRAND } from "@/lib/brand"
-import { CONTENT_TYPE_META, CONTENT_TYPE_ORDER } from "@/lib/contentType"
+import { CONTENT_TYPE_META, CONTENT_TYPE_ORDER, contentTypeToSlug } from "@/lib/contentType"
 import { useDiscoveryFeed } from "@/features/discovery/useDiscoveryFeed"
 import { Button } from "@/components/ui/Button"
 
@@ -42,7 +42,7 @@ export default function HomePage() {
                 title={pluralLabel(type)}
                 subtitle={meta.description}
                 // Type-filtered listing page is a placeholder route for now
-                viewAllHref={`/discover/${type.toLowerCase()}`}
+                viewAllHref={`/discover/${contentTypeToSlug(type)}`}
               >
                 {stories.slice(0, 12).map((s) => (
                   <StoryCard

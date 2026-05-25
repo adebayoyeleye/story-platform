@@ -206,3 +206,28 @@ turn the dial.
 
 ---
 
+## P-CONTENT-TYPE-FILTER — Server-side contentType filter on listing endpoint
+
+**Why deferred:** discovery pages currently fetch a generous page and
+filter client-side via useDiscoveryFeed. Works for < 200 stories per
+type; breaks gently above that (results clipped at page boundary).
+
+**Shape:** GET /api/v1/content/stories?contentType=POEM&page=N&size=K
+backed by a Mongo index on `(contentType, status, updatedAt)`. Same
+endpoint can later accept `?sort=trending`.
+
+**Trigger:** when any one type has 100+ published works.
+
+---
+
+## P-DISCOVER-FILTERS — Sort + filter on /discover/:type
+
+**Why deferred:** the listing page has no sort or filter today. At
+scale, readers want: newest / trending / longest / by-author / by-tag.
+Tags are Phase 3; the rest needs server support.
+
+**Trigger:** when a single type has 30+ works AND there's user
+feedback about findability.
+
+---
+
