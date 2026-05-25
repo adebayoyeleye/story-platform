@@ -171,3 +171,14 @@ to the writer.
 
 ---
 
+## P-EDITOR-POLISH — Focus + Dropcursor + Link Tiptap extensions
+
+**Why deferred:** focus highlights the active paragraph (for distraction-
+free mode), dropcursor shows the drop indicator, link enables inline
+URLs. None block writers from drafting today.
+
+**Trigger:** the focus-mode keyboard shortcut work, or first user
+report of missing link insertion.
+
+---
+

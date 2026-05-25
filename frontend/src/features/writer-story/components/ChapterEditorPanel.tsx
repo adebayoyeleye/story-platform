@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom"
-import type { Chapter } from "@/types"
+import type { Chapter, ContentType, } from "@/types"
 import { Button } from "@/components/ui/Button"
 import { Field } from "@/components/ui/Field"
 import { Input } from "@/components/ui/Input"
 // import { Textarea } from "@/components/ui/Textarea"
 import { RichTextEditor } from "./RichTextEditor"
+import { modeForContentType } from "./editorConfig"
 
 type Props = {
   storyId: string
@@ -13,6 +14,7 @@ type Props = {
   isDirty: boolean
   isSaving: boolean
   fieldErrors: Record<string, string>
+  contentType: ContentType
 
   newTitle: string
   setNewTitle: (v: string) => void
@@ -30,6 +32,7 @@ export function ChapterEditorPanel({
   isDirty,
   isSaving,
   fieldErrors,
+  contentType,
   newTitle,
   setNewTitle,
   newContent,
@@ -37,6 +40,7 @@ export function ChapterEditorPanel({
   onSaveChapter,
   onNewChapter,
 }: Props) {
+  const mode = modeForContentType(contentType)
   return (
     <section className="rounded-md border bg-card p-4">
       <div className="mb-3 text-xl font-semibold">Editor</div>
@@ -88,6 +92,7 @@ export function ChapterEditorPanel({
               value={newContent}
               onChange={setNewContent}
               disabled={!canEdit}
+              mode={mode}
             />
           </Field>
 

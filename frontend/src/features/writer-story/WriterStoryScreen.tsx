@@ -479,6 +479,7 @@ export function WriterStoryScreen() {
             isDirty={isDirty}
             isSaving={isSaving}
             fieldErrors={fieldErrors}
+            contentType={story.contentType}
             newTitle={newTitle}
             setNewTitle={(v) => {
               setNewTitle(v)
