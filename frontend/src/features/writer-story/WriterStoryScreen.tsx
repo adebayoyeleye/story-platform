@@ -31,6 +31,7 @@ import { StatsCard } from "@/features/analytics/components/StatsCard"
 import { useWriterStory } from "./useWriterStory"
 import { WriterShell, type SaveState } from "./components/WriterShell"
 import { approxWordCount } from "@/lib/text"
+import { clearChapterStash, peekChapterStash, useChapterAutosave } from "./useChapterAutosave"
 
 export function WriterStoryScreen() {
   const { storyId } = useParams()
@@ -112,6 +113,29 @@ export function WriterStoryScreen() {
       setNewContent(toEditorHtml(full.content, full.contentFormat))
       setIsDirty(false)
       setSaveState({ status: "idle" })
+
+      // Recovery prompt. Server's updatedAt vs our stash.at — newer stash
+      // means there are unsaved edits from the last session.
+      const stash = peekChapterStash(chapterId)
+      if (stash) {
+        const serverAt = full.updatedAt ? new Date(full.updatedAt).getTime() : 0
+        if (stash.at > serverAt) {
+          const restore = window.confirm(
+            "Found unsaved changes from your last session. Restore them?\n\n" +
+            "Click Cancel to keep the server's version."
+          )
+          if (restore) {
+            setNewTitle(stash.title)
+            setNewContent(stash.content)
+            setIsDirty(true) // triggers an autosave once they touch the editor
+          } else {
+            clearChapterStash(chapterId)
+          }
+        } else {
+          // Stash is older than server — server already has these edits.
+          clearChapterStash(chapterId)
+        }
+      }
     } catch (err: unknown) {
       setPageError(err instanceof Error ? err.message : "Failed to load chapter")
     }
@@ -374,37 +398,15 @@ export function WriterStoryScreen() {
   // -------- Autosave (debounced). Guarded on isDirty so we never save
   // a chapter that the user merely opened. Cleanup cancels the pending
   // timer on next edit or unmount — no double-saves, no orphan timers. --
-  useEffect(() => {
-    if (!selectedChapter) return
-    if (!canEdit) return
-    if (!isDirty) return
-
-    setSaveState({ status: "dirty" })
-
-    const t = window.setTimeout(async () => {
-      setIsSaving(true)
-      setSaveState({ status: "saving" })
-      try {
-        await apiPut(`/api/v1/content/writer/chapters/${selectedChapter.id}`, {
-          title: newTitle,
-          content: newContent,
-          contentFormat: "RICH_TEXT_HTML",
-          publishImmediately: false,
-        })
-        setIsDirty(false)
-        setSaveState({ status: "saved", at: new Date() })
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Autosave failed"
-        setSaveState({ status: "error", message: msg })
-        toast.push({ title: "Autosave failed", kind: "error" })
-      } finally {
-        setIsSaving(false)
-      }
-    }, 900)
-
-    return () => window.clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChapter, canEdit, isDirty, newTitle, newContent])
+  useChapterAutosave({
+    chapterId: selectedChapter?.id ?? null,
+    title: newTitle,
+    content: newContent,
+    isDirty,
+    canEdit,
+    onState: setSaveState,
+    onSaved: () => setIsDirty(false),
+  })
 
   // ============== RENDER ==============
 

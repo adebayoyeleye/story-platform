@@ -182,3 +182,27 @@ report of missing link insertion.
 
 ---
 
+## P-RECOVERY-MODAL — Replace window.confirm with proper recovery modal
+
+**Why deferred:** the unsaved-edits recovery moment uses window.confirm
+which can't be styled and locks the whole tab. Acceptable for an edge
+case (crashed session). Better UX is a custom dialog showing both
+versions side-by-side, or a top-banner with "Restore / Discard".
+
+**Trigger:** once the editor has any other modal experiences (slide-
+over settings, publish confirmation) and the modal primitive is mature.
+
+---
+
+## P-TS-STRICT — Enable strict TS + no-explicit-any lint
+
+**Why deferred:** introducing strict mode mid-project requires fixing
+every spot that relied on implicit-any inference. The codebase is in
+flux; turning it on now generates noise that competes with feature
+work.
+
+**Trigger:** after Phase 1 lands. One concerted typing pass, then
+turn the dial.
+
+---
+

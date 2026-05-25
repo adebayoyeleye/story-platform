@@ -53,6 +53,7 @@ export type Chapter = {
   contentFormat: ContentFormat;
   chapterNumber: number;
   status: ChapterStatus;
+  updatedAt?: string | null;  // ISO 8601 from server; optional during transition
 };
 
 export type ContentStats = {

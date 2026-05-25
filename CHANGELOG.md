@@ -11,6 +11,26 @@ Pre-1.0 means the API is unstable and may break without warning. After
 ## [Unreleased]
 
 ### Added
+- Type-aware Tiptap editor configuration (`editorConfig.ts`).
+  Poems disable headings/lists/blockquote at the schema level and
+  preserve whitespace; articles + prose unchanged.
+- `@tiptap/extension-placeholder`, `@tiptap/extension-character-count`,
+  `@tiptap/extension-typography`.
+- `useChapterAutosave` — debounced save with exponential-backoff retry
+  and localStorage stash. Unsaved edits survive tab crashes.
+- Restore-on-open prompt when a newer stash exists.
+
+### Changed
+- Editor surface uses `font-serif`; toolbar redesigned with mode-
+  specific button set (data-driven, not JSX conditionals).
+- Smart quotes / em-dashes / ellipsis applied automatically via
+  Typography extension.
+
+### Backlog
+- P-EDITOR-POLISH (focus/dropcursor/link)
+- P-RECOVERY-MODAL (replace window.confirm)
+
+### Added
 - `useWriterStory` hook — owns editor server-state
 - `WriterShell` component — minimal editor chrome
 - `SaveState` discriminated union
