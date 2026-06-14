@@ -11,6 +11,26 @@ Pre-1.0 means the API is unstable and may break without warning. After
 ## [Unreleased]
 
 ### Added
+- `/discover/:slug` listing pages (serial / short / articles / poems)
+  with grid layout, type-specific metadata header, skeleton state.
+- `useTypeFeed` hook — single-type narrowing of useDiscoveryFeed.
+- `contentTypeToSlug` / `contentTypeFromSlug` — URL-friendly mapping.
+- Focus mode in the editor: `Cmd/Ctrl + .` to enter, `Esc` to exit.
+  Top bar collapses to 2px (hover-reveals), sidebar hides, editor
+  widens.
+- `useKeyboardShortcut` hook — platform-correct (`mod` resolves to
+  Cmd on Mac, Ctrl elsewhere).
+
+### Fixed
+- `Chapter.updatedAt` typed as `string | null`, not `any`. Restores
+  stash-recovery correctness when comparing server time to stash time.
+
+### Backlog
+- P-TS-STRICT (turn on strict TS + no-explicit-any)
+- P-CONTENT-TYPE-FILTER (server-side type filter)
+- P-DISCOVER-FILTERS (sort + filter on listing page)
+
+### Added
 - Type-aware Tiptap editor configuration (`editorConfig.ts`).
   Poems disable headings/lists/blockquote at the schema level and
   preserve whitespace; articles + prose unchanged.

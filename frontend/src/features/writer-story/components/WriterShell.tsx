@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 import type { PropsWithChildren, ReactNode } from "react"
-import { Button } from "@/components/ui/Button"
+// import { Button } from "@/components/ui/Button"
 import { useTheme } from "@/hooks/useTheme"
 import { cn } from "@/lib/cn"
 
@@ -19,6 +19,10 @@ type Props = PropsWithChildren<{
   primaryAction?: ReactNode
   /** Optional left sidebar (chapter list). Hidden when not provided. */
   sidebar?: ReactNode
+  /** Distraction-free mode. Top bar collapses to 2px, sidebar hides,
+   *  editor widens. Cmd/Ctrl+. or Esc to toggle (parent owns the state
+   *  and the keyboard bindings). */
+  focusMode?: boolean
 }>
 
 /**
@@ -46,13 +50,29 @@ export function WriterShell({
   wordCount,
   primaryAction,
   sidebar,
+  focusMode = false,
   children,
 }: Props) {
   const [theme, toggleTheme] = useTheme()
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <header className="border-b border-border bg-background">
+    <div
+      className={cn(
+        "min-h-screen text-foreground flex flex-col transition-colors",
+        // Subtly different background in focus mode — same idea as iA
+        // Writer's focus mode: the page itself feels "in a different mode"
+        focusMode ? "bg-surface-muted/30" : "bg-background"
+      )}
+    >
+      {/* Top bar — collapses to a thin line in focus mode that reveals
+          on hover so writers can still exit / see save state. */}
+      <header
+        className={cn(
+          "group border-b border-border bg-background",
+          "transition-[height] duration-200",
+          focusMode ? "h-1 hover:h-12 overflow-hidden" : "h-12"
+        )}
+      >
         <div className="px-3 h-12 flex items-center gap-3">
           <Link
             to="/write"
@@ -91,13 +111,22 @@ export function WriterShell({
       </header>
 
       <div className="flex flex-1 min-h-0">
-        {sidebar && (
+        {/* Sidebar hides entirely in focus mode */}
+        {sidebar && !focusMode && (
           <aside className="w-60 shrink-0 border-r border-border bg-surface-muted/50 overflow-y-auto">
             {sidebar}
           </aside>
         )}
         <main className="flex-1 overflow-y-auto min-w-0">{children}</main>
       </div>
+
+      {/* Discrete bottom-right hint about focus mode. Only shown when
+          focus mode is on — like iA Writer. */}
+      {focusMode && (
+        <div className="fixed bottom-4 right-4 text-xs text-muted-foreground font-mono pointer-events-none">
+          Esc to exit
+        </div>
+      )}
     </div>
   )
 }

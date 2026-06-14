@@ -32,6 +32,8 @@ import { useWriterStory } from "./useWriterStory"
 import { WriterShell, type SaveState } from "./components/WriterShell"
 import { approxWordCount } from "@/lib/text"
 import { clearChapterStash, peekChapterStash, useChapterAutosave } from "./useChapterAutosave"
+import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut"
+import { cn } from "@/lib/cn"
 
 export function WriterStoryScreen() {
   const { storyId } = useParams()
@@ -55,6 +57,7 @@ export function WriterStoryScreen() {
   const [isDirty, setIsDirty] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" })
+  const [focusMode, setFocusMode] = useState(false)
 
   // -------- Confirm dialog for switching chapters with unsaved edits --------
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -408,6 +411,23 @@ export function WriterStoryScreen() {
     onSaved: () => setIsDirty(false),
   })
 
+  useKeyboardShortcut({
+    modifiers: ["mod"],
+    key: ".",
+    handler: (e) => {
+      e.preventDefault()
+      setFocusMode((f) => !f)
+    },
+  })
+
+  useKeyboardShortcut({
+    key: "Escape",
+    handler: () => {
+      if (focusMode) setFocusMode(false)
+    },
+    enabled: focusMode,
+  })
+
   // ============== RENDER ==============
 
   if (loading) {
@@ -435,6 +455,7 @@ export function WriterStoryScreen() {
       storyTitle={story.title}
       saveState={saveState}
       wordCount={wordCount}
+      focusMode={focusMode}  // <-- add focusMode prop to WriterShell
       primaryAction={
         <Button
           size="sm"
@@ -459,7 +480,10 @@ export function WriterStoryScreen() {
         ) : undefined
       }
     >
-      <div className="max-w-3xl mx-auto px-6 py-10">
+      <div className={cn(
+        "mx-auto px-6 py-10 transition-[max-width] duration-200",
+        focusMode ? "max-w-4xl" : "max-w-3xl"
+      )}>
         <StoryHeader
           story={story}
           error={pageError}
