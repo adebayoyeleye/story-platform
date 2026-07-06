@@ -11,6 +11,18 @@ Pre-1.0 means the API is unstable and may break without warning. After
 ## [Unreleased]
 
 ### Added
+- `SlideOver` UI primitive (right-edge panel, backdrop, Esc close,
+  animation symmetric on open/close)
+- Settings + contributors moved out of `<details>` into a proper
+  slide-over opened from the editor top bar
+- `Cmd/Ctrl + S` to save the open chapter (blocks browser native)
+- `Cmd/Ctrl + \\` to toggle the chapter sidebar; preference persisted
+- `?` opens a keyboard shortcut cheatsheet
+- `WRITER_SHORTCUTS` registry — single source of truth for bindings +
+  cheatsheet content
+- `?` button in the editor top bar for discoverability
+
+### Added
 - `/discover/:slug` listing pages (serial / short / articles / poems)
   with grid layout, type-specific metadata header, skeleton state.
 - `useTypeFeed` hook — single-type narrowing of useDiscoveryFeed.

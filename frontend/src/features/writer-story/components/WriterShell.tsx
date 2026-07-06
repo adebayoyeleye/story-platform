@@ -25,7 +25,7 @@ type Props = PropsWithChildren<{
    *  and the keyboard bindings). */
   focusMode?: boolean
   onHelp?: () => void
-}
+}>
 
 /**
  * Editor chrome shell per design doc §6.2.

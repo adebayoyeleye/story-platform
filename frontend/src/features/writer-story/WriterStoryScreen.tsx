@@ -435,13 +435,11 @@ export function WriterStoryScreen() {
     onSaved: () => setIsDirty(false),
   })
 
-  const isChaptered = story.contentType === "STORY_WITH_CHAPTERS"
-
   useKeyboardShortcut({
     modifiers: ["mod"],
     key: "\\",
     handler: (e) => {
-      if (!isChaptered) return // no-op for standalone works
+      if (story?.contentType !== "STORY_WITH_CHAPTERS") return // no-op for standalone works
       e.preventDefault()
       setSidebarHidden((h) => !h)
     },
@@ -495,6 +493,7 @@ export function WriterStoryScreen() {
       setCheatsheetOpen(true)
     },
   })
+  
 
   // ============== RENDER ==============
 
@@ -515,6 +514,8 @@ export function WriterStoryScreen() {
       </WriterShell>
     )
   }
+  
+  const isChaptered = story.contentType === "STORY_WITH_CHAPTERS"
 
   return (
     <WriterShell

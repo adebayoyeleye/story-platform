@@ -5,7 +5,6 @@ import TextAlign from "@tiptap/extension-text-align"
 import Placeholder from "@tiptap/extension-placeholder"
 import CharacterCount from "@tiptap/extension-character-count"
 import Typography from "@tiptap/extension-typography"
-import { Button } from "@/components/ui/Button"
 import { cn } from "@/lib/cn"
 import {
   PLACEHOLDER,

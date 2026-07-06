@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
-import { useNavigate, Link } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { ApiError, apiGet, apiPost } from "@/api/http"
 import type { ContentType, StorySummary } from "../types"
 import { Button } from "@/components/ui/Button"
