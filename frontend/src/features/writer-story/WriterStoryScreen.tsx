@@ -81,6 +81,36 @@ export function WriterStoryScreen() {
 
   const [settingsOpen, setSettingsOpen] = useState(false)
 
+  // Per design doc §6.3: chapter sidebar should remember its
+  // pinned/collapsed state per user via localStorage.
+  const [sidebarHidden, setSidebarHidden] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("writer-sidebar-hidden") === "1"
+    } catch {
+      return false
+    }
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("writer-sidebar-hidden", sidebarHidden ? "1" : "0")
+    } catch {
+      /* ignore */
+    }
+  }, [sidebarHidden])
+
+  const isChaptered = story.contentType === "STORY_WITH_CHAPTERS"
+
+  useKeyboardShortcut({
+    modifiers: ["mod"],
+    key: "\\",
+    handler: (e) => {
+      if (!isChaptered) return // no-op for standalone works
+      e.preventDefault()
+      setSidebarHidden((h) => !h)
+    },
+  })
+
   // -------- Sync meta form when the story loads/changes --------
   useEffect(() => {
     if (!story) return
@@ -462,8 +492,6 @@ export function WriterStoryScreen() {
     )
   }
 
-  const isChaptered = story.contentType === "STORY_WITH_CHAPTERS"
-
   return (
     <WriterShell
       storyTitle={story.title}
@@ -489,7 +517,7 @@ export function WriterStoryScreen() {
         </>
       }
       sidebar={
-        isChaptered ? (
+        isChaptered && !sidebarHidden ? (
           <ChapterListPanel
             chapters={chapters}
             isSaving={isSaving}
