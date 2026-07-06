@@ -431,6 +431,17 @@ export function WriterStoryScreen() {
     enabled: focusMode,
   })
 
+  useKeyboardShortcut({
+    modifiers: ["mod"],
+    key: "s",
+    handler: (e) => {
+      e.preventDefault() // Block the browser's save-page dialog
+      if (selectedChapter && canEdit && !isSaving) {
+        saveChapter(false)
+      }
+    },
+  })
+
   // ============== RENDER ==============
 
   if (loading) {
