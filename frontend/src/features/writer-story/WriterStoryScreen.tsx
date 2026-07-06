@@ -34,6 +34,7 @@ import { approxWordCount } from "@/lib/text"
 import { clearChapterStash, peekChapterStash, useChapterAutosave } from "./useChapterAutosave"
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut"
 import { cn } from "@/lib/cn"
+import { SlideOver } from "@/components/ui/SlideOver"
 
 export function WriterStoryScreen() {
   const { storyId } = useParams()
@@ -77,6 +78,8 @@ export function WriterStoryScreen() {
 
   // -------- Per-row chapter-action busy id --------
   const [chapterActionId, setChapterActionId] = useState<string | null>(null)
+
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   // -------- Sync meta form when the story loads/changes --------
   useEffect(() => {
@@ -457,13 +460,22 @@ export function WriterStoryScreen() {
       wordCount={wordCount}
       focusMode={focusMode}  // <-- add focusMode prop to WriterShell
       primaryAction={
-        <Button
-          size="sm"
-          onClick={() => saveChapter(false)}
-          disabled={!selectedChapter || isSaving}
-        >
-          Save
-        </Button>
+        <>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setSettingsOpen(true)}
+          >
+            Settings
+          </Button>
+          <Button
+            size="sm"
+            onClick={() => saveChapter(false)}
+            disabled={!selectedChapter || isSaving}
+          >
+            Save
+          </Button>
+        </>
       }
       sidebar={
         isChaptered ? (
@@ -521,14 +533,14 @@ export function WriterStoryScreen() {
           />
         </div>
 
-        {/* Settings + contributors live behind a collapsible until we
-            build a proper slide-over next turn. */}
-        <details className="mt-12 border-t border-border pt-8">
-          <summary className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground cursor-pointer">
-            Story settings &amp; contributors
-          </summary>
-
-          <div className="mt-6 space-y-8">
+        {/* Settings + contributors slide-over */}
+        <SlideOver
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          title="Story settings"
+          width="lg"
+        >
+          <div className="space-y-8">
             <StorySettingsPanel
               byline={story.byline ?? "—"}
               editTitle={editTitle}
@@ -556,7 +568,7 @@ export function WriterStoryScreen() {
               onRemove={removeContributor}
             />
           </div>
-        </details>
+        </SlideOver>
       </div>
 
       <ConfirmDialog
