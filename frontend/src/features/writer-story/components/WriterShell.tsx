@@ -11,6 +11,7 @@ export type SaveState =
   | { status: "saved"; at: Date }
   | { status: "error"; message: string; retry?: () => void }
 
+
 type Props = PropsWithChildren<{
   storyTitle: string
   saveState: SaveState
@@ -23,7 +24,8 @@ type Props = PropsWithChildren<{
    *  editor widens. Cmd/Ctrl+. or Esc to toggle (parent owns the state
    *  and the keyboard bindings). */
   focusMode?: boolean
-}>
+  onHelp?: () => void
+}
 
 /**
  * Editor chrome shell per design doc §6.2.
@@ -51,6 +53,7 @@ export function WriterShell({
   primaryAction,
   sidebar,
   focusMode = false,
+  onHelp,
   children,
 }: Props) {
   const [theme, toggleTheme] = useTheme()
@@ -97,6 +100,16 @@ export function WriterShell({
               <span className="text-xs text-muted-foreground tabular-nums font-mono">
                 {wordCount.toLocaleString()} words
               </span>
+            )}
+            {onHelp && (
+              <button
+                onClick={onHelp}
+                aria-label="Keyboard shortcuts"
+                title="Keyboard shortcuts (?)"
+                className="text-muted-foreground hover:text-foreground text-sm w-7 h-7 inline-flex items-center justify-center rounded-md hover:bg-surface-muted"
+              >
+                <span aria-hidden="true">?</span>
+              </button>
             )}
             <button
               onClick={toggleTheme}

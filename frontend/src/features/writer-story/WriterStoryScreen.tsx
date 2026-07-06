@@ -35,6 +35,7 @@ import { clearChapterStash, peekChapterStash, useChapterAutosave } from "./useCh
 import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut"
 import { cn } from "@/lib/cn"
 import { SlideOver } from "@/components/ui/SlideOver"
+import { ShortcutCheatsheet } from "./components/ShortcutCheatsheet"
 
 export function WriterStoryScreen() {
   const { storyId } = useParams()
@@ -81,7 +82,7 @@ export function WriterStoryScreen() {
 
   const [settingsOpen, setSettingsOpen] = useState(false)
 
-  // Per design doc §6.3: chapter sidebar should remember its
+  // chapter sidebar should remember its
   // pinned/collapsed state per user via localStorage.
   const [sidebarHidden, setSidebarHidden] = useState<boolean>(() => {
     try {
@@ -91,6 +92,8 @@ export function WriterStoryScreen() {
     }
   })
 
+  const [cheatsheetOpen, setCheatsheetOpen] = useState(false)
+
   useEffect(() => {
     try {
       localStorage.setItem("writer-sidebar-hidden", sidebarHidden ? "1" : "0")
@@ -98,18 +101,6 @@ export function WriterStoryScreen() {
       /* ignore */
     }
   }, [sidebarHidden])
-
-  const isChaptered = story.contentType === "STORY_WITH_CHAPTERS"
-
-  useKeyboardShortcut({
-    modifiers: ["mod"],
-    key: "\\",
-    handler: (e) => {
-      if (!isChaptered) return // no-op for standalone works
-      e.preventDefault()
-      setSidebarHidden((h) => !h)
-    },
-  })
 
   // -------- Sync meta form when the story loads/changes --------
   useEffect(() => {
@@ -444,6 +435,18 @@ export function WriterStoryScreen() {
     onSaved: () => setIsDirty(false),
   })
 
+  const isChaptered = story.contentType === "STORY_WITH_CHAPTERS"
+
+  useKeyboardShortcut({
+    modifiers: ["mod"],
+    key: "\\",
+    handler: (e) => {
+      if (!isChaptered) return // no-op for standalone works
+      e.preventDefault()
+      setSidebarHidden((h) => !h)
+    },
+  })
+
   useKeyboardShortcut({
     modifiers: ["mod"],
     key: ".",
@@ -469,6 +472,27 @@ export function WriterStoryScreen() {
       if (selectedChapter && canEdit && !isSaving) {
         saveChapter(false)
       }
+    },
+  })
+
+  // New shortcut: ? opens the cheatsheet.
+  // `?` is Shift+/ on US keyboards; rather than encoding that, we match
+  // the printable char e.key === "?" which works regardless of layout.
+  useKeyboardShortcut({
+    key: "?",
+    handler: (e) => {
+      // Don't fire when focus is in an input/contentEditable — writers
+      // typing ? in their prose shouldn't get a modal.
+      const t = e.target as HTMLElement
+      if (
+        t.tagName === "INPUT" ||
+        t.tagName === "TEXTAREA" ||
+        t.isContentEditable
+      ) {
+        return
+      }
+      e.preventDefault()
+      setCheatsheetOpen(true)
     },
   })
 
@@ -498,6 +522,7 @@ export function WriterStoryScreen() {
       saveState={saveState}
       wordCount={wordCount}
       focusMode={focusMode}  // <-- add focusMode prop to WriterShell
+      onHelp={() => setCheatsheetOpen(true)}
       primaryAction={
         <>
           <Button
@@ -608,6 +633,11 @@ export function WriterStoryScreen() {
             />
           </div>
         </SlideOver>
+
+        <ShortcutCheatsheet
+          open={cheatsheetOpen}
+          onClose={() => setCheatsheetOpen(false)}
+        />
       </div>
 
       <ConfirmDialog
