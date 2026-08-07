@@ -1,5 +1,5 @@
 import { useCallback, useRef } from "react"
-import { Link } from "react-router-dom"
+import { AppLink as Link } from "@/components/AppLink"
 import { cn } from "@/lib/cn"
 
 type Props = {

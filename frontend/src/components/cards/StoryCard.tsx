@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import { AppLink as Link } from "@/components/AppLink"
 import type { StorySummary } from "@/types"
 import { CoverImage } from "@/components/CoverImage"
 import { UserAvatar } from "@/components/Avatar"

@@ -204,3 +204,24 @@
   .story-richtext a          { @apply text-primary underline underline-offset-2 hover:opacity-80; }
 }
 
+/* ---------- View Transitions ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: vt-fade-out 120ms ease-in both;
+  }
+  ::view-transition-new(root) {
+    animation: vt-fade-in 180ms ease-out both;
+  }
+}
+
+/* Reduced motion: skip the animation entirely. The DOM still swaps,
+   just instantly — which is exactly what the API does without styles. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}
+
+@keyframes vt-fade-out { to { opacity: 0 } }
+@keyframes vt-fade-in  { from { opacity: 0 } }

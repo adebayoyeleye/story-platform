@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
+import { AppLink as Link } from "@/components/AppLink"
 import { apiGet } from "@/api/http"
 import type { StorySummary, ChapterSummary } from "@/types"
 import { AppShell } from "@/components/layout/AppShell"
