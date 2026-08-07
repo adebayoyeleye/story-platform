@@ -36,6 +36,7 @@ import { useKeyboardShortcut } from "@/hooks/useKeyboardShortcut"
 import { cn } from "@/lib/cn"
 import { SlideOver } from "@/components/ui/SlideOver"
 import { ShortcutCheatsheet } from "./components/ShortcutCheatsheet"
+import { PublishConfirm } from "./components/PublishConfirm"
 
 export function WriterStoryScreen() {
   const { storyId } = useParams()
@@ -126,6 +127,11 @@ export function WriterStoryScreen() {
   const canEdit =
     selectedChapter?.status === "DRAFT" ||
     selectedChapter?.status === "PUBLISHED"
+
+  // Null-safe: story may not be loaded yet. Handlers referencing this
+  // run after render, so the optional chain is only for the early-render
+  // window before the fetch resolves.
+  const isChaptered = story?.contentType === "STORY_WITH_CHAPTERS"
 
   // -------- Open a chapter into the editor --------
   async function openChapter(chapterId: string) {
@@ -439,7 +445,7 @@ export function WriterStoryScreen() {
     modifiers: ["mod"],
     key: "\\",
     handler: (e) => {
-      if (story?.contentType !== "STORY_WITH_CHAPTERS") return // no-op for standalone works
+      if (!isChaptered) return
       e.preventDefault()
       setSidebarHidden((h) => !h)
     },
@@ -493,7 +499,43 @@ export function WriterStoryScreen() {
       setCheatsheetOpen(true)
     },
   })
+
+  const [publishConfirmOpen, setPublishConfirmOpen] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+
+  async function handlePublish() {
+    setPublishing(true)
+    setPageError(null)
+
+    try {
+      if (isChaptered) {
+        // Chaptered: publish the currently-open chapter
+        if (!selectedChapter) throw new Error("No chapter selected")
+        await apiPatchNoContent(
+          `/api/v1/content/writer/chapters/${selectedChapter.id}/status?status=PUBLISHED`
+        )
+      } else {
+        // Standalone (short story, article, poem): publish the story itself.
+        // Uses the same endpoint the status dropdown uses; this button is
+        // a curated shortcut to it.
+        await changeStatus("PUBLISHED")
+      }
+
+      setPublishConfirmOpen(false)
+      toast.push({ title: "Published", kind: "success" })
+      await reload()
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to publish"
+      setPageError(msg)
+      toast.push({ title: msg, kind: "error" })
+    } finally {
+      setPublishing(false)
+    }
+  }
   
+  const canPublishHere = isChaptered
+    ? !!selectedChapter && selectedChapter.status === "DRAFT"
+    : story?.status === "DRAFT"
 
   // ============== RENDER ==============
 
@@ -515,7 +557,6 @@ export function WriterStoryScreen() {
     )
   }
   
-  const isChaptered = story.contentType === "STORY_WITH_CHAPTERS"
 
   return (
     <WriterShell
@@ -533,13 +574,25 @@ export function WriterStoryScreen() {
           >
             Settings
           </Button>
+
           <Button
+            variant="ghost"
             size="sm"
             onClick={() => saveChapter(false)}
             disabled={!selectedChapter || isSaving}
           >
             Save
           </Button>
+
+          {canPublishHere && (
+            <Button
+              size="sm"
+              onClick={() => setPublishConfirmOpen(true)}
+              disabled={publishing}
+            >
+              Publish
+            </Button>
+          )}
         </>
       }
       sidebar={
@@ -657,6 +710,14 @@ export function WriterStoryScreen() {
           if (pendingChapterId) openChapter(pendingChapterId)
           setPendingChapterId(null)
         }}
+      />
+      <PublishConfirm
+        open={publishConfirmOpen}
+        story={story}
+        chapter={isChaptered ? selectedChapter : undefined}
+        onCancel={() => setPublishConfirmOpen(false)}
+        onConfirm={handlePublish}
+        publishing={publishing}
       />
     </WriterShell>
   )

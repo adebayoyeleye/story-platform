@@ -11,6 +11,15 @@ Pre-1.0 means the API is unstable and may break without warning. After
 ## [Unreleased]
 
 ### Added
+- Real Publish action in the editor top bar with confirmation dialog.
+  Standalone works publish the story; chaptered works publish the
+  currently-open chapter.
+
+### Changed
+- ChapterEditorPanel sheds its "Save & publish" button — publish lives
+  once in the top bar.
+
+### Added
 - `SlideOver` UI primitive (right-edge panel, backdrop, Esc close,
   animation symmetric on open/close)
 - Settings + contributors moved out of `<details>` into a proper

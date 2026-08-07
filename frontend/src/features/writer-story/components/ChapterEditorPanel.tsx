@@ -109,16 +109,7 @@ export function ChapterEditorPanel({
                   onClick={() => onSaveChapter(false)}
                   disabled={!canEdit || isSaving}
                 >
-                  {selectedChapter?.status === "PUBLISHED" ? "Save edits (don't publish)" : "Save draft"}
-                </Button>
-
-                <Button
-                  variant="primary"   // make the publish action visually primary
-                  type="button"
-                  onClick={() => onSaveChapter(true)}
-                  disabled={!canEdit || isSaving}
-                >
-                  {selectedChapter?.status === "PUBLISHED" ? "Save & update live" : "Save & publish"}
+                  Save
                 </Button>
 
                 <Link to={`/stories/${storyId}`}>

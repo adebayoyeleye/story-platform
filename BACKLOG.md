@@ -231,3 +231,13 @@ feedback about findability.
 
 ---
 
+## P-EDITOR-PANEL-CLEAN — Simplify ChapterEditorPanel's save API
+
+**Why deferred:** onSaveChapter still takes a publishImmediately flag
+that's now always false. Thinning it to onSave() cleans the interface
+but ripples into every caller. Do in the same pass as the settings-
+slide-over cleanup.
+
+**Trigger:** next time ChapterEditorPanel is touched.
+
+---
